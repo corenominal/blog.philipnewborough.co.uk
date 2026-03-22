@@ -19,6 +19,8 @@
         <meta property="og:image:height" content="<?= esc($og['image_height']) ?>">
         <?php endif; ?>
         <?php endif; ?>
+        <!-- RSS Feed -->
+        <link rel="alternate" type="application/rss+xml" title="<?= esc(config('App')->siteName) ?>" href="<?= rtrim(config('App')->baseURL, '/') ?>/feed/rss">
         <!-- Favicon and touch icons -->
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/icon-32x32.png">

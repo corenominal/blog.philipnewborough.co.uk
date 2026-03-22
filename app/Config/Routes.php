@@ -15,6 +15,9 @@ $routes->get('posts/(:segment)', 'Post::show/$1');
 $routes->get('posts/(:segment)/json', 'Post::showJson/$1');
 $routes->get('posts/(:segment)/markdown', 'Post::showMarkdown/$1');
 
+// Feed routes
+$routes->get('feed/rss', 'Feed::rss');
+
 // Tag archive routes
 $routes->get('tags/(:segment)', 'Tag::show/$1');
 
