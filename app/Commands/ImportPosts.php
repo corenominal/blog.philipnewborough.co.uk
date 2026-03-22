@@ -22,6 +22,8 @@
  * Examples:
  *   php spark import:posts
  *   php spark import:posts imports/blog-export-2026-03-21-223221.json
+ *   php spark import:posts --truncate
+ *   php spark import:posts imports/blog-export-2026-03-21-223221.json --truncate
  */
 
 namespace App\Commands;
@@ -39,11 +41,25 @@ class ImportPosts extends BaseCommand
     protected $arguments   = [
         'file' => '(Optional) Path to the JSON import file. Defaults to the first JSON file found in the imports/ directory.',
     ];
+    protected $options = [
+        '--truncate' => 'Truncate the posts, tags and meta tables and remove all existing media files before importing.',
+    ];
 
     public function run(array $params): void
     {
         $mediaPath = FCPATH . 'media' . DIRECTORY_SEPARATOR;
         $baseUrl   = rtrim(config('App')->baseURL, '/') . '/media/';
+
+        if (CLI::getOption('truncate')) {
+            $confirm = CLI::prompt('This will delete all posts, tags, meta and media files. Are you sure?', ['y', 'n']);
+
+            if ($confirm !== 'y') {
+                CLI::write('Truncate cancelled.', 'yellow');
+                return;
+            }
+
+            $this->truncateData($mediaPath);
+        }
 
         $filePath = $params[0] ?? '';
 
@@ -114,6 +130,7 @@ class ImportPosts extends BaseCommand
             $body     = $post['body'] ?? '';
             $bodyHtml = $post['body_html'] ?? '';
             [$body, $bodyHtml] = $this->processBodyImages($body, $bodyHtml, $mediaPath, $baseUrl);
+            [$body, $bodyHtml] = $this->replaceInternalLinks($body, $bodyHtml);
 
             $postRow = [
                 'uuid'           => $uuid,
@@ -183,6 +200,28 @@ class ImportPosts extends BaseCommand
         CLI::write("Import complete. Imported: {$imported}, Skipped: {$skipped}.", 'green');
     }
 
+    private function truncateData(string $mediaPath): void
+    {
+        $db = \Config\Database::connect();
+        $db->table('meta')->truncate();
+        $db->table('tags')->truncate();
+        $db->table('posts')->truncate();
+        CLI::write('Tables truncated: posts, tags, meta.', 'cyan');
+
+        $files = glob($mediaPath . '*');
+
+        if (!empty($files)) {
+            foreach ($files as $file) {
+                if (is_file($file) && basename($file) !== '.gitkeep') {
+                    unlink($file);
+                }
+            }
+            CLI::write('Existing media files removed.', 'cyan');
+        }
+
+        CLI::newLine();
+    }
+
     private function downloadFeaturedImage(string $url, string $postUuid, string $mediaPath): string
     {
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
@@ -204,6 +243,19 @@ class ImportPosts extends BaseCommand
         CLI::write("  -> Featured image: {$filename}", 'cyan');
 
         return $filename;
+    }
+
+    private function replaceInternalLinks(string $body, string $bodyHtml): array
+    {
+        $postsBaseUrl = rtrim(config('App')->baseURL, '/') . '/posts/';
+
+        $pattern     = '/https:\/\/philipnewborough\.co\.uk\/blog\/([a-zA-Z0-9_-]+)/';
+        $replacement = $postsBaseUrl . '$1';
+
+        $body     = preg_replace($pattern, $replacement, $body);
+        $bodyHtml = preg_replace($pattern, $replacement, $bodyHtml);
+
+        return [$body, $bodyHtml];
     }
 
     private function processBodyImages(string $body, string $bodyHtml, string $mediaPath, string $baseUrl): array
