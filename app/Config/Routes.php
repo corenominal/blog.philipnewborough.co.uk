@@ -7,6 +7,9 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
+// Search route
+$routes->get('search', 'Search::index');
+
 // Post permalink routes
 $routes->get('posts/(:segment)', 'Post::show/$1');
 $routes->get('posts/(:segment)/json', 'Post::showJson/$1');

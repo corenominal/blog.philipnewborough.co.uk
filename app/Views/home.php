@@ -3,6 +3,27 @@
 <?= $this->section('content') ?>
 <div class="container">
 
+    <div class="row mt-4">
+        <div class="col-12 col-lg-8 offset-lg-2 mb-4">
+            <form class="search-form" action="<?= site_url('search') ?>" method="get" role="search">
+                <div class="input-group">
+                    <input
+                        class="form-control"
+                        type="search"
+                        name="q"
+                        placeholder="Search posts&hellip;"
+                        aria-label="Search posts"
+                        required
+                    >
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <span class="visually-hidden">Search</span>
+                    </button>
+                </div>
+            </form>
+        </div> <!-- /.col -->
+    </div> <!-- /.row -->
+
     <?php if ($latestPost): ?>
     <div class="row mt-3">
         <div class="col-12 col-lg-8 offset-lg-2">

@@ -29,6 +29,7 @@ class Filters extends BaseFilters
         '/',
         'posts/*',
         'tags/*',
+        'search',
         'metrics/receive',
         'cli/*',
         'api/*',
@@ -43,6 +44,7 @@ class Filters extends BaseFilters
         '/',
         'posts/*',
         'tags/*',
+        'search',
         'metrics/receive',
     ];
 
