@@ -174,6 +174,20 @@
                                 <i class="bi bi-eye me-1"></i> Preview
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button
+                                class="nav-link"
+                                id="tab-help"
+                                data-bs-toggle="tab"
+                                data-bs-target="#pane-help"
+                                type="button"
+                                role="tab"
+                                aria-controls="pane-help"
+                                aria-selected="false"
+                            >
+                                <i class="bi bi-question-circle me-1"></i> Help
+                            </button>
+                        </li>
                         <li class="ms-auto d-flex align-items-center pe-2">
                             <small class="text-secondary" id="body-char-count">0 chars</small>
                         </li>
@@ -192,6 +206,85 @@
                             ><?= esc($val('body')) ?></textarea>
                         </div>
 
+                        <!-- Help pane -->
+                        <div class="tab-pane fade" id="pane-help" role="tabpanel" aria-labelledby="tab-help">
+                            <div class="p-4">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="card border">
+                                            <div class="card-header bg-body-secondary small text-uppercase fw-semibold text-secondary">
+                                                <i class="bi bi-keyboard me-1"></i> Keyboard Shortcuts
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-12 col-md-6">
+                                                        <ul class="list-unstyled mb-0">
+                                                            <li><kbd>Tab</kbd>: Insert four spaces</li>
+                                                            <li><kbd>Ctrl</kbd> / <kbd>Cmd</kbd> + <kbd>B</kbd>: Toggle bold (wraps selection with <code>**</code>)</li>
+                                                            <li><kbd>Ctrl</kbd> / <kbd>Cmd</kbd> + <kbd>I</kbd>: Toggle italic (wraps selection with <code>*</code>)</li>
+                                                            <li><kbd>`</kbd> (with selection): Wrap selection in inline code (<code>`code`</code>)</li>
+                                                            <li>Type <code>``</code> then <kbd>`</kbd>: Expand to fenced code block</li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-12 col-md-6">
+                                                        <ul class="list-unstyled mb-0">
+                                                            <li><kbd>Enter</kbd>: Continue list items automatically</li>
+                                                            <li><kbd>Ctrl</kbd> / <kbd>Cmd</kbd> + <kbd>S</kbd>: Save (or click the Save button)</li>
+                                                            <li>Quick Publish: Use the <em>Save &amp; Publish</em> button</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3 text-muted small">These shortcuts apply while the editor textarea is focused.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="card border">
+                                            <div class="card-header bg-body-secondary small text-uppercase fw-semibold text-secondary">
+                                                <i class="bi bi-markdown me-1"></i> GitHub Flavored Markdown (Quick Guide)
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <h6 class="small fw-semibold">Headings</h6>
+                                                        <pre class="small"><code># H1
+## H2
+### H3</code></pre>
+
+                                                        <h6 class="small fw-semibold">Emphasis</h6>
+                                                        <pre class="small"><code>**bold**  *italic*  ~~strikethrough~~</code></pre>
+
+                                                        <h6 class="small fw-semibold">Code</h6>
+                                                        <pre class="small"><code>`inline code`  
+```
+// fenced block
+```</code></pre>
+
+                                                        <h6 class="small fw-semibold">Lists</h6>
+                                                        <pre class="small"><code>- Bulleted item
+1. Numbered item
+- [ ] Task item  - [x] Completed task</code></pre>
+
+                                                        <h6 class="small fw-semibold">Links & Images</h6>
+                                                        <pre class="small"><code>[Link text](https://example.com)
+![Alt text](/path/to/img.jpg)</code></pre>
+
+                                                        <h6 class="small fw-semibold">Blockquote & Table</h6>
+                                                        <pre class="small"><code>> A quote
+
+| Col 1 | Col 2 |
+| ---- | ---- |
+| A    | B    |</code></pre>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-2 text-muted small">See <a href="https://docs.github.com/en/get-started/writing-on-github/basic-writing-and-formatting-syntax" target="_blank">GitHub's Markdown docs</a> for full details.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Preview pane -->
                         <div class="tab-pane fade" id="pane-preview" role="tabpanel" aria-labelledby="tab-preview">
                             <div class="post-editor__preview-pane p-4">
