@@ -55,6 +55,16 @@
         </div> <!-- /.col -->
     </div> <!-- /.row -->
 
+    <div class="row mt-4">
+        <div class="col-12 col-lg-8 offset-lg-2">
+            <div class="card border shadow">
+                <div class="card-body">
+                    <p class="mb-0 small"><i class="bi bi-rss me-2 text-warning"></i>If you enjoyed this post or found it useful, you can <a class="text-decoration-none" href="<?= site_url('feed/rss') ?>">subscribe to my RSS feed</a>.</p>
+                </div>
+            </div>
+        </div> <!-- /.col -->
+    </div> <!-- /.row -->
+
     <?php if (!empty($similarPosts)): ?>
     <div class="row mt-5 mb-5">
         <div class="col-12 col-lg-8 offset-lg-2">

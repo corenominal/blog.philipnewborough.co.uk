@@ -44,6 +44,11 @@
                 <div class="post__body e-content">
                     <?= $latestPost['body_html'] ?>
                 </div>
+                <div class="post__formats mt-4 pt-3 border-top">
+                    <span class="text-muted small me-2">View as:</span>
+                    <a class="small text-decoration-none me-3" href="<?= site_url('posts/' . esc($latestPost['slug']) . '/json') ?>"><i class="bi bi-filetype-json me-1"></i>JSON</a>
+                    <a class="small text-decoration-none" href="<?= site_url('posts/' . esc($latestPost['slug']) . '/markdown') ?>"><i class="bi bi-markdown me-1"></i>Markdown</a>
+                </div>
                 <?php if (!empty($latestPost['tags_list'])): ?>
                 <footer class="post__footer mt-4">
                     <div class="post__tags d-flex flex-wrap gap-2">
@@ -56,6 +61,16 @@
                 </footer>
                 <?php endif; ?>
             </article>
+        </div> <!-- /.col -->
+    </div> <!-- /.row -->
+
+    <div class="row mt-4">
+        <div class="col-12 col-lg-8 offset-lg-2">
+            <div class="card border shadow">
+                <div class="card-body">
+                    <p class="mb-0 small"><i class="bi bi-rss me-2 text-warning"></i>If you enjoyed this post or found it useful, you can <a class="text-decoration-none" href="<?= site_url('feed/rss') ?>">subscribe to my RSS feed</a>.</p>
+                </div>
+            </div>
         </div> <!-- /.col -->
     </div> <!-- /.row -->
     <?php endif; ?>
