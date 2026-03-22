@@ -266,8 +266,10 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("btn-delete").addEventListener("click", function() {
         if (selectedIds.size === 0) { return; }
         pendingDeleteIds = Array.from(selectedIds);
-        document.getElementById("delete-modal-count").textContent = pendingDeleteIds.length;
-        document.getElementById("delete-modal-body").textContent = buildDeleteModalMessage(pendingDeleteIds);
+        const countEl = document.getElementById("delete-modal-count");
+        const bodyEl  = document.getElementById("delete-modal-body");
+        if (countEl) { countEl.textContent = pendingDeleteIds.length; }
+        if (bodyEl)  { bodyEl.textContent  = buildDeleteModalMessage(pendingDeleteIds); }
         deleteModal.show();
     });
 
@@ -277,8 +279,10 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!btn) { return; }
         const id = parseInt(btn.dataset.id, 10);
         pendingDeleteIds = [id];
-        document.getElementById("delete-modal-count").textContent = 1;
-        document.getElementById("delete-modal-body").textContent = buildDeleteModalMessage(pendingDeleteIds);
+        const countEl = document.getElementById("delete-modal-count");
+        const bodyEl  = document.getElementById("delete-modal-body");
+        if (countEl) { countEl.textContent = 1; }
+        if (bodyEl)  { bodyEl.textContent  = buildDeleteModalMessage(pendingDeleteIds); }
         deleteModal.show();
     });
 
