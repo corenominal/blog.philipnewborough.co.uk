@@ -14,313 +14,294 @@ document.addEventListener("DOMContentLoaded", function() {
     const selectedIds = new Set();
 
     function updateDeleteButton() {
-        document.getElementById('btn-delete').disabled = selectedIds.size === 0;
+        document.getElementById("btn-delete").disabled = selectedIds.size === 0;
     }
 
-    // ── Status filter state ────────────────────────────────────────────────────
-    let statusFilter = '';
+    // ── Pending delete (supports both bulk and row-level) ──────────────────────
+    let pendingDeleteIds = [];
 
-    const exampleTable = new DataTable('#example-table', {
+    // ── Status filter state ────────────────────────────────────────────────────
+    let statusFilter = "";
+
+    const postsTable = new DataTable("#posts-table", {
 
         // ── Layout & UI ────────────────────────────────────────────────────────
-        autoWidth:      true,           // Auto-calculate column widths
-        info:           true,           // Show "Showing X to Y of Z entries"
-        lengthChange:   true,           // Allow user to change page length
-        ordering:       true,           // Enable column sorting
-        paging:         true,           // Enable pagination
-        searching:      true,           // Enable global search box
-        orderMulti:     true,           // Allow multi-column sort (shift+click)
-        orderClasses:   true,           // Add sorting CSS classes to columns
-        pagingType:     'simple_numbers', // 'simple' | 'simple_numbers' | 'full' | 'full_numbers' | 'first_last_numbers'
-        pageLength:     10,             // Rows per page
-        lengthMenu:     [10, 25, 50, 100], // Page length options
+        autoWidth:    true,
+        info:         true,
+        lengthChange: true,
+        ordering:     true,
+        paging:       true,
+        searching:    true,
+        orderMulti:   true,
+        orderClasses: true,
+        pagingType:   "simple_numbers",
+        pageLength:   25,
+        lengthMenu:   [10, 25, 50, 100],
 
         // ── Default sort ───────────────────────────────────────────────────────
-        order: [[1, 'asc']],            // [[columnIndex, 'asc'|'desc'], ...]
+        order: [[6, "desc"]],
 
         // ── Performance ────────────────────────────────────────────────────────
-        deferRender:    false,          // Defer rendering off-screen rows (useful for large datasets)
-        processing:     true,           // Show a processing indicator (useful with serverSide)
-        serverSide:     true,           // Enable server-side processing (requires ajax option)
-        stateSave:      false,          // Persist state (paging, sorting, search) in sessionStorage
+        processing: true,
+        serverSide: true,
+        stateSave:  false,
 
         // ── Data source ────────────────────────────────────────────────────────
         ajax: {
-            url: '/admin/datatable',
+            url: "/admin/posts/datatable",
             data: function(d) {
                 d.status_filter = statusFilter;
             },
         },
-        // data: [],                    // Inline JS data array (alternative to HTML or ajax)
-
-        // ── Scroll ─────────────────────────────────────────────────────────────
-        scrollX:        false,          // Horizontal scrolling
-        scrollY:        '',             // Vertical scroll height, e.g. '400px'
-        scrollCollapse: false,          // Shrink table when fewer rows than scrollY height
 
         // ── Column definitions ─────────────────────────────────────────────────
         columns: [
             {
-                // Column 0 — Checkbox (row select)
+                // Column 0 — Checkbox
                 data:           null,
                 title:          '<input type="checkbox" id="select-all-checkbox" class="form-check-input" aria-label="Select all rows on this page">',
                 orderable:      false,
                 searchable:     false,
                 visible:        true,
-                width:          '2rem',
-                className:      'text-center',
+                width:          "2rem",
+                className:      "text-center",
                 defaultContent: '<input type="checkbox" class="row-select form-check-input" aria-label="Select row">',
             },
             {
-                // Column 1 — #
-                name:        'id',
-                data:        'id',
-                title:       '#',
-                type:        'num',         // 'string' | 'num' | 'num-fmt' | 'html' | 'html-num' | 'date'
-                orderable:   true,
-                searchable:  false,         // No value in searching the row number
-                visible:     true,
-                width:       '3rem',
-                className:   'text-end',
+                // Column 1 — ID
+                name:       "id",
+                data:       "id",
+                title:      "#",
+                type:       "num",
+                orderable:  true,
+                searchable: false,
+                visible:    true,
+                width:      "3rem",
+                className:  "text-end",
             },
             {
-                // Column 1 — First Name
-                name:        'first_name',
-                data:        'first_name',
-                title:       'First Name',
-                type:        'string',
-                orderable:   true,
-                searchable:  true,
-                visible:     true,
-                width:       '',            // Leave empty to let autoWidth decide
-                className:   '',
+                // Column 2 — Title
+                name:       "title",
+                data:       "title",
+                title:      "Title",
+                type:       "html",
+                orderable:  true,
+                searchable: true,
+                visible:    true,
+                width:      "",
             },
             {
-                // Column 2 — Last Name
-                name:        'last_name',
-                data:        'last_name',
-                title:       'Last Name',
-                type:        'string',
-                orderable:   true,
-                searchable:  true,
-                visible:     true,
-                width:       '',
-                className:   '',
+                // Column 3 — Status
+                name:       "status",
+                data:       "status",
+                title:      "Status",
+                type:       "html",
+                orderable:  true,
+                searchable: true,
+                visible:    true,
+                width:      "6rem",
+                className:  "text-center",
             },
             {
-                // Column 3 — Email
-                name:        'email',
-                data:        'email',
-                title:       'Email',
-                type:        'string',
-                orderable:   true,
-                searchable:  true,
-                visible:     true,
-                width:       '',
-                className:   '',
+                // Column 4 — Tags
+                name:       "tags",
+                data:       "tags",
+                title:      "Tags",
+                type:       "html",
+                orderable:  false,
+                searchable: true,
+                visible:    true,
+                width:      "",
             },
             {
-                // Column 4 — Role
-                name:        'role',
-                data:        'role',
-                title:       'Role',
-                type:        'string',
-                orderable:   true,
-                searchable:  true,
-                visible:     true,
-                width:       '',
-                className:   '',
+                // Column 5 — Views
+                name:       "hitcounter",
+                data:       "hitcounter",
+                title:      "Views",
+                type:       "num",
+                orderable:  true,
+                searchable: false,
+                visible:    true,
+                width:      "5rem",
+                className:  "text-end",
             },
             {
-                // Column 5 — Status (server returns badge HTML; sorting/searching handled server-side on the raw value)
-                name:        'status',
-                data:        'status',
-                title:       'Status',
-                type:        'string',
-                orderable:   true,
-                searchable:  true,
-                visible:     true,
-                width:       '6rem',
-                className:   'text-center',
+                // Column 6 — Published date
+                name:       "published_at",
+                data:       "published_at",
+                title:      "Published",
+                type:       "html",
+                orderable:  true,
+                searchable: false,
+                visible:    true,
+                width:      "8rem",
+                className:  "text-end text-nowrap",
             },
             {
-                // Column 6 — Joined (ISO date string sorts correctly as a string)
-                name:        'joined',
-                data:        'joined',
-                title:       'Joined',
-                type:        'date',
-                orderable:   true,
-                searchable:  false,
-                visible:     true,
-                width:       '7rem',
-                className:   '',
+                // Column 7 — Actions
+                data:       null,
+                title:      "",
+                orderable:  false,
+                searchable: false,
+                visible:    true,
+                width:      "6rem",
+                className:  "text-center text-nowrap",
+                render: function(data, type, row) {
+                    return '<button class="btn btn-outline-secondary btn-sm btn-row-edit me-1" data-id="' + row.id + '" title="Edit" disabled>'
+                         + '<i class="bi bi-pencil-fill"></i></button>'
+                         + '<button class="btn btn-outline-danger btn-sm btn-row-delete" data-id="' + row.id + '" title="Delete">'
+                         + '<i class="bi bi-trash3-fill"></i></button>';
+                },
             },
         ],
+    });
 
-        // ── Language / localisation ────────────────────────────────────────────
-        language: {
-            emptyTable:     'No data available in table',
-            info:           'Showing _START_ to _END_ of _TOTAL_ entries',
-            infoEmpty:      'Showing 0 to 0 of 0 entries',
-            infoFiltered:   '(filtered from _MAX_ total entries)',
-            lengthMenu:     'Show _MENU_ entries',
-            loadingRecords: 'Loading...',
-            processing:     'Processing...',
-            search:         'Search:',
-            zeroRecords:    'No matching records found',
-            paginate: {
-                first:    'First',
-                last:     'Last',
-                next:     'Next',
-                previous: 'Previous',
-            },
-        },
-
-        // ── Callbacks ──────────────────────────────────────────────────────────
-        // initComplete: function(settings, json) {},   // Fires once table is fully initialised
-        drawCallback: function() {
-            // Restore checkbox state and row highlight for every visible row after each draw
-            exampleTable.rows({ page: 'current' }).every(function() {
-                const id       = this.data().id;
-                const checkbox = this.node().querySelector('.row-select');
-                const selected = selectedIds.has(id);
-                if (checkbox) checkbox.checked = selected;
-                this.node().classList.toggle('table-active', selected);
+    // ── Select all checkbox ────────────────────────────────────────────────────
+    document.querySelector("#posts-table").addEventListener("change", function(e) {
+        if (e.target.id === "select-all-checkbox") {
+            const checkboxes = document.querySelectorAll("#posts-table .row-select");
+            checkboxes.forEach(cb => {
+                cb.checked = e.target.checked;
+                const id = parseInt(cb.closest("tr").dataset.id, 10);
+                if (e.target.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
             });
-            // Sync the select-all header checkbox
-            const selectAll = document.getElementById('select-all-checkbox');
-            if (selectAll) {
-                const visibleIds = [];
-                exampleTable.rows({ page: 'current' }).every(function() { visibleIds.push(this.data().id); });
-                const n = visibleIds.filter(id => selectedIds.has(id)).length;
-                selectAll.checked       = n > 0 && n === visibleIds.length;
-                selectAll.indeterminate = n > 0 && n <  visibleIds.length;
+            updateDeleteButton();
+        }
+    });
+
+    // ── Row checkbox ──────────────────────────────────────────────────────────
+    document.querySelector("#posts-table tbody").addEventListener("change", function(e) {
+        if (e.target.classList.contains("row-select")) {
+            const row  = postsTable.row(e.target.closest("tr"));
+            const data = row.data();
+            if (e.target.checked) {
+                selectedIds.add(data.id);
+            } else {
+                selectedIds.delete(data.id);
             }
             updateDeleteButton();
-        },
-        // rowCallback:  function(row, data, index) {}, // Fires for each row on every draw
-        // createdRow:   function(row, data, index) {}, // Fires once per row when the TR element is created
-        // headerCallback: function(thead, data, start, end, display) {},
-
-    });
-
-    // ── Row checkbox clicks ────────────────────────────────────────────────────
-    document.querySelector('#example-table tbody').addEventListener('change', function(e) {
-        if (!e.target.classList.contains('row-select')) return;
-        const row = exampleTable.row(e.target.closest('tr'));
-        const id  = row.data().id;
-        const tr  = e.target.closest('tr');
-        if (e.target.checked) {
-            selectedIds.add(id);
-            tr.classList.add('table-active');
-        } else {
-            selectedIds.delete(id);
-            tr.classList.remove('table-active');
         }
-        // Sync the select-all header checkbox
-        const selectAll = document.getElementById('select-all-checkbox');
-        if (selectAll) {
-            const visibleIds = [];
-            exampleTable.rows({ page: 'current' }).every(function() { visibleIds.push(this.data().id); });
-            const n = visibleIds.filter(id => selectedIds.has(id)).length;
-            selectAll.checked       = n > 0 && n === visibleIds.length;
-            selectAll.indeterminate = n > 0 && n <  visibleIds.length;
-        }
-        updateDeleteButton();
     });
 
-    // ── Select-all checkbox (current page) ────────────────────────────────────
-    document.querySelector('#example-table thead').addEventListener('change', function(e) {
-        if (e.target.id !== 'select-all-checkbox') return;
-        exampleTable.rows({ page: 'current' }).every(function() {
-            const id       = this.data().id;
-            const checkbox = this.node().querySelector('.row-select');
-            if (e.target.checked) {
-                selectedIds.add(id);
-                if (checkbox) checkbox.checked = true;
-                this.node().classList.add('table-active');
-            } else {
-                selectedIds.delete(id);
-                if (checkbox) checkbox.checked = false;
-                this.node().classList.remove('table-active');
-            }
-        });
+    // Reset checkboxes on table redraw
+    postsTable.on("draw", function() {
+        selectedIds.clear();
         updateDeleteButton();
+        const selectAll = document.getElementById("select-all-checkbox");
+        if (selectAll) { selectAll.checked = false; }
     });
 
-    // ── Status filter dropdown ──────────────────────────────────────────────────
-    document.querySelectorAll('.status-filter-item').forEach(function(item) {
-        item.addEventListener('click', function(e) {
+    // ── Status filter ─────────────────────────────────────────────────────────
+    document.querySelectorAll(".status-filter-item").forEach(item => {
+        item.addEventListener("click", function(e) {
             e.preventDefault();
-            const value = this.dataset.value;
-            // Update active state on dropdown items
-            document.querySelectorAll('.status-filter-item').forEach(i => i.classList.remove('active'));
-            this.classList.add('active');
-            // Update button label
-            const label = value || 'All';
-            document.getElementById('btn-status-filter').innerHTML =
-                '<i class="bi bi-funnel-fill"></i><span class="d-none d-lg-inline"> Status: ' + label + '</span>';
-            // Send filter as a custom AJAX param; server applies an exact WHERE clause
-            statusFilter = value;
-            exampleTable.ajax.reload(null, false);
+            document.querySelectorAll(".status-filter-item").forEach(i => i.classList.remove("active"));
+            this.classList.add("active");
+            statusFilter = this.dataset.value;
+            const label = this.dataset.value
+                ? "Status: " + this.dataset.value.charAt(0).toUpperCase() + this.dataset.value.slice(1)
+                : "Status: All";
+            document.getElementById("btn-status-filter").innerHTML =
+                '<i class="bi bi-funnel-fill"></i><span class="d-none d-lg-inline"> ' + label + "</span>";
+            postsTable.ajax.reload();
         });
     });
 
-    // ── Refresh button ─────────────────────────────────────────────────────────
-    document.getElementById('btn-datatable-refresh').addEventListener('click', function() {
-        exampleTable.ajax.reload(null, false); // null keeps current page; false = don't reset paging
-        console.log('Table refreshed');
+    // ── Refresh button ────────────────────────────────────────────────────────
+    document.getElementById("btn-datatable-refresh").addEventListener("click", function() {
+        postsTable.ajax.reload();
     });
 
-    // ── Delete button → show confirmation modal ────────────────────────────────
-    const deleteModalEl = document.getElementById('modal-delete-confirm');
-    // Disable Bootstrap's built-in FocusTrap (focus: false) so we can manage
-    // focus ourselves. Without this, the trap fights focus-move attempts made
-    // during the hide.bs.modal event and snaps focus back inside the modal —
-    // causing the "Blocked aria-hidden on a focused element" warning.
-    const deleteModal   = new bootstrap.Modal(deleteModalEl, { focus: false });
+    // ── Stats refresh ─────────────────────────────────────────────────────────
+    function formatCompact(value) {
+        if (value >= 1_000_000) {
+            return parseFloat((value / 1_000_000).toFixed(1)) + 'm';
+        }
+        if (value >= 1_000) {
+            return parseFloat((value / 1_000).toFixed(1)) + 'k';
+        }
+        return value.toLocaleString();
+    }
 
-    // When the modal finishes opening, focus the close button manually
-    // (replaces the behaviour normally provided by Bootstrap's FocusTrap).
-    deleteModalEl.addEventListener('shown.bs.modal', function() {
-        const closeBtn = deleteModalEl.querySelector('.btn-close');
-        if (closeBtn) closeBtn.focus();
-    });
+    function refreshStats() {
+        fetch("/admin/stats")
+            .then(res => res.json())
+            .then(data => {
+                Object.entries(data).forEach(([key, value]) => {
+                    const el = document.querySelector('[data-stat="' + key + '"]');
+                    if (el) { el.textContent = key === 'total_views' ? formatCompact(value) : value.toLocaleString(); }
+                });
+            });
+    }
 
-    // Move focus outside the modal before Bootstrap sets aria-hidden.
-    // Because FocusTrap is disabled, nothing fights this move, so focus is
-    // guaranteed to be outside the modal when aria-hidden="true" is applied
-    // after the fade animation completes.
-    deleteModalEl.addEventListener('hide.bs.modal', function() {
-        const focused = deleteModalEl.querySelector(':focus');
-        if (focused) focused.blur();
-        const btn = document.getElementById('btn-delete');
-        if (btn && !btn.disabled) btn.focus();
-    });
+    // ── Delete modal ──────────────────────────────────────────────────────────
+    const deleteModal = new bootstrap.Modal(document.getElementById("modal-delete-confirm"));
 
-    document.getElementById('btn-delete').addEventListener('click', function() {
-        document.getElementById('delete-modal-count').textContent = selectedIds.size;
+    function getRawStatusById(id) {
+        let status = null;
+        postsTable.rows().every(function() {
+            if (this.data().id === id) { status = this.data().raw_status; }
+        });
+        return status;
+    }
+
+    function buildDeleteModalMessage(ids) {
+        const trashedIds = ids.filter(id => getRawStatusById(id) === 'trashed');
+        const toTrash    = ids.length - trashedIds.length;
+        const parts      = [];
+        if (toTrash > 0) {
+            parts.push(toTrash + ' post' + (toTrash > 1 ? 's' : '') + ' will be moved to Trash.');
+        }
+        if (trashedIds.length > 0) {
+            parts.push(trashedIds.length + ' already-trashed post' + (trashedIds.length > 1 ? 's' : '') + ' will be permanently deleted.');
+        }
+        return parts.join(' ');
+    }
+
+    // Bulk delete button → queue all selected IDs
+    document.getElementById("btn-delete").addEventListener("click", function() {
+        if (selectedIds.size === 0) { return; }
+        pendingDeleteIds = Array.from(selectedIds);
+        document.getElementById("delete-modal-count").textContent = pendingDeleteIds.length;
+        document.getElementById("delete-modal-body").textContent = buildDeleteModalMessage(pendingDeleteIds);
         deleteModal.show();
     });
 
-    // ── Confirm delete ─────────────────────────────────────────────────────────
-    document.getElementById('btn-delete-confirm').addEventListener('click', function() {
-        const ids = Array.from(selectedIds);
-
-        fetch('/admin/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids }),
-        })
-        .then(res => res.json())
-        .then(() => {
-            deleteModal.hide();
-            selectedIds.clear();
-            updateDeleteButton();
-            exampleTable.ajax.reload(null, false);
-        })
-        .catch(err => console.error('Delete failed:', err));
+    // Row-level delete button → queue just this row's ID
+    document.querySelector("#posts-table tbody").addEventListener("click", function(e) {
+        const btn = e.target.closest(".btn-row-delete");
+        if (!btn) { return; }
+        const id = parseInt(btn.dataset.id, 10);
+        pendingDeleteIds = [id];
+        document.getElementById("delete-modal-count").textContent = 1;
+        document.getElementById("delete-modal-body").textContent = buildDeleteModalMessage(pendingDeleteIds);
+        deleteModal.show();
     });
 
+    // ── Confirm delete ────────────────────────────────────────────────────────
+    document.getElementById("btn-delete-confirm").addEventListener("click", function() {
+        const ids = pendingDeleteIds.slice();
+
+        fetch("/admin/posts/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids }),
+        })
+            .then(res => res.json())
+            .then(data => {
+                deleteModal.hide();
+                pendingDeleteIds = [];
+                if (data.status === "success") {
+                    selectedIds.clear();
+                    updateDeleteButton();
+                    postsTable.ajax.reload();
+                    refreshStats();
+                }
+            });
+    });
 });
 

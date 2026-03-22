@@ -23,8 +23,9 @@ $routes->get('tags/(:segment)', 'Tag::show/$1');
 
 // Admin routes
 $routes->get('/admin', 'Admin\Home::index');
-$routes->get('/admin/datatable', 'Admin\Home::datatable');
-$routes->post('/admin/delete', 'Admin\Home::delete');
+$routes->get('/admin/stats', 'Admin\Home::stats');
+$routes->get('/admin/posts/datatable', 'Admin\Home::postsDataTable');
+$routes->post('/admin/posts/delete', 'Admin\Home::deletePosts');
 
 // API routes
 $routes->match(['get', 'options'], '/api/test/ping', 'Api\Test::ping');

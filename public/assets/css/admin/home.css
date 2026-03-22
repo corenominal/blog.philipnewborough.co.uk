@@ -1,0 +1,17 @@
+/* ── Stat cards ─────────────────────────────────────────────────────────── */
+.stat-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.stat-card__value {
+    line-height: 1.1;
+}
+
+.stat-card__label {
+    letter-spacing: 0.06em;
+}

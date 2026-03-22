@@ -124,6 +124,11 @@
                                     <i class="bi bi-speedometer2"></i> Dashboard
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center gap-2 text-white-50 px-3 py-2" href="/admin#posts">
+                                    <i class="bi bi-file-text-fill"></i> Posts
+                                </a>
+                            </li>
                         </ul>
                         <?php endif; ?>
 
