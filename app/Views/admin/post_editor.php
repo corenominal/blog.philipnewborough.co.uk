@@ -43,13 +43,28 @@
 
     <!-- ── Flash messages ──────────────────────────────────────────────────── -->
     <?php if (session()->getFlashdata('success')): ?>
-    <div class="alert border-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i><?= esc(session()->getFlashdata('success')) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="position-fixed top-0 end-0 p-3" style="z-index:1200;">
+        <div id="flash-toast-success" class="toast align-items-center border-success" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle-fill me-2"></i><?= esc(session()->getFlashdata('success')) ?>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toastEl = document.getElementById('flash-toast-success');
+            if (toastEl && typeof bootstrap !== 'undefined') {
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        });
+    </script>
     <?php endif; ?>
     <?php if (session()->getFlashdata('errors')): ?>
-    <div class="alert border-danger alert-dismissible fade show" role="alert">
+    <div id="flash-message-errors" class="alert text-body alert-dark border-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <strong>Please fix the following errors:</strong>
         <ul class="mb-0 mt-1">
@@ -59,6 +74,16 @@
         </ul>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    <script>
+        // Auto-hide error message after 5 seconds
+        setTimeout(() => {
+            const flashEl = document.getElementById('flash-message-errors');
+            if (flashEl) {
+                const alert = new bootstrap.Alert(flashEl);
+                alert.close();
+            }
+        }, 5000);
+    </script>
     <?php endif; ?>
 
     <!-- ── Form ────────────────────────────────────────────────────────────── -->
@@ -430,7 +455,7 @@
 <!-- Unsaved-changes toast -->
 <div
     id="unsaved-toast"
-    class="toast align-items-center text-bg-warning border-0 position-fixed bottom-0 end-0 m-3"
+    class="toast align-items-center border-warning position-fixed top-0 end-0 m-3"
     role="alert"
     aria-live="assertive"
     aria-atomic="true"
