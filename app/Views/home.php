@@ -15,7 +15,7 @@
                         aria-label="Search posts"
                         required
                     >
-                    <button class="btn btn-primary" type="submit">
+                    <button class="btn btn-outline-primary" type="submit">
                         <i class="bi bi-search" aria-hidden="true"></i>
                         <span class="visually-hidden">Search</span>
                     </button>
