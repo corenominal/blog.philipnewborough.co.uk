@@ -43,7 +43,7 @@
 
     <!-- ── Flash messages ──────────────────────────────────────────────────── -->
     <?php if (session()->getFlashdata('success')): ?>
-    <div class="position-fixed top-0 end-0 p-3" style="z-index:1200;">
+    <div class="position-fixed end-0 p-3" style="z-index:1200; top: 60px;">
         <div id="flash-toast-success" class="toast align-items-center border-success" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
             <div class="d-flex">
                 <div class="toast-body">
@@ -455,12 +455,12 @@
 <!-- Unsaved-changes toast -->
 <div
     id="unsaved-toast"
-    class="toast align-items-center border-warning position-fixed top-0 end-0 m-3"
+    class="toast align-items-center border-warning position-fixed end-0 m-3"
     role="alert"
     aria-live="assertive"
     aria-atomic="true"
     data-bs-autohide="false"
-    style="z-index:1100;"
+    style="z-index:1100; top: 60px;"
 >
     <div class="d-flex">
         <div class="toast-body">
