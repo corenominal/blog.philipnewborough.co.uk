@@ -147,7 +147,7 @@ class ImportPosts extends BaseCommand
                 'comment_status' => $post['comment_status'] ?? 'open',
                 'comment_count'  => (int) ($post['comment_count'] ?? 0),
                 'hitcounter'     => (int) ($post['hitcounter'] ?? 0),
-                'published_at'   => ($post['published_at'] ?: '0000-00-00 00:00:00'),
+                'published_at'   => ($post['published_at'] ?: null),
                 'created_at'     => $post['created_at'] ?? date('Y-m-d H:i:s'),
                 'updated_at'     => $post['updated_at'] ?? date('Y-m-d H:i:s'),
                 'deleted_at'     => ($post['deleted_at'] ?: null),
