@@ -422,6 +422,70 @@ document.addEventListener('DOMContentLoaded', function () {
           .catch(function () { showUploadError('Failed to remove image'); });
       });
     }
+
+    // Choose existing featured image from media library
+    const btnChooseExisting = document.getElementById('btn-choose-existing');
+    const listUrl = form ? form.dataset.listUrl : null;
+    const featuredModalEl = document.getElementById('featured-library-modal');
+    const featuredLibraryGrid = featuredModalEl ? featuredModalEl.querySelector('#featured-library-grid') : null;
+    // Move modal to document.body to avoid stacking-context / z-index issues
+    if (featuredModalEl && featuredModalEl.parentNode !== document.body) {
+      document.body.appendChild(featuredModalEl);
+    }
+    const featuredModalInstance = featuredModalEl ? new bootstrap.Modal(featuredModalEl) : null;
+
+    if (btnChooseExisting && featuredModalEl && listUrl && featuredLibraryGrid && featuredModalInstance) {
+      btnChooseExisting.addEventListener('click', function () {
+        // show modal and fetch list
+        featuredLibraryGrid.innerHTML = '<div class="col-12 text-center p-4 text-secondary">Loading…</div>';
+        featuredModalInstance.show();
+
+        fetch(listUrl, { credentials: 'same-origin' })
+          .then(function (res) { if (!res.ok) throw new Error('Failed'); return res.json(); })
+          .then(function (data) {
+            featuredLibraryGrid.innerHTML = '';
+            const files = (data && data.files) ? data.files : [];
+            if (files.length === 0) {
+              featuredLibraryGrid.innerHTML = '<div class="col-12 text-center p-4 text-muted">No images found.</div>';
+              return;
+            }
+
+            files.forEach(function (f) {
+              const col = document.createElement('div');
+              col.className = 'col-6 col-md-4 col-lg-3';
+              const wrap = document.createElement('div');
+              wrap.className = 'fn-thumb-wrap rounded overflow-hidden border bg-white';
+              wrap.style.cursor = 'pointer';
+              wrap.tabIndex = 0;
+
+              const img = document.createElement('img');
+              img.className = 'fn-thumb';
+              img.loading = 'lazy';
+              img.alt = f.filename;
+              img.src = f.url;
+
+              wrap.appendChild(img);
+              wrap.addEventListener('click', function () {
+                featuredInput.value = f.filename;
+                if (featuredThumb) {
+                  featuredThumb.src = f.url;
+                  featuredThumb.style.display = '';
+                }
+                if (featuredPreview) featuredPreview.style.display = '';
+                if (btnRemoveFeatured) btnRemoveFeatured.style.display = '';
+                markDirty();
+                featuredModalInstance.hide();
+              });
+
+              col.appendChild(wrap);
+              featuredLibraryGrid.appendChild(col);
+            });
+          })
+          .catch(function () {
+            featuredLibraryGrid.innerHTML = '<div class="col-12 text-center p-4 text-danger">Unable to load images.</div>';
+          });
+      });
+    }
   })();
 
   // ── Dirty-state tracking ─────────────────────────────────────────────────

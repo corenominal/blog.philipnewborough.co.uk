@@ -333,6 +333,32 @@ class Posts extends BaseController
         return $this->response->setJSON(['success' => true]);
     }
 
+    /**
+     * AJAX endpoint: list existing featured images in public/media
+     * Returns JSON: { files: [ { filename, url }, ... ] }
+     */
+    public function list_featured_images(): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $dir = FCPATH . 'media/';
+        $files = [];
+
+        if (is_dir($dir)) {
+            $items = scandir($dir);
+            foreach ($items as $f) {
+                if ($f === '.' || $f === '..') continue;
+                if (strpos($f, 'og-') !== 0) continue;
+                $path = $dir . $f;
+                if (!is_file($path)) continue;
+                $files[] = [
+                    'filename' => $f,
+                    'url'      => site_url('media/' . $f),
+                ];
+            }
+        }
+
+        return $this->response->setJSON(['files' => $files]);
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────────
 
     /**

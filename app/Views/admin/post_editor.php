@@ -70,6 +70,7 @@
         data-preview-url="<?= site_url('admin/posts/preview') ?>"
         data-upload-url="<?= site_url('admin/posts/upload_featured_image') ?>"
         data-remove-url="<?= site_url('admin/posts/remove_featured_image') ?>"
+        data-list-url="<?= site_url('admin/posts/list_featured_images') ?>"
         novalidate
     >
         <?= csrf_field() ?>
@@ -344,6 +345,9 @@
                                 >
                                 <div class="small text-muted">Drop an image here, or click to choose. Must be exactly 1200 × 630px. Allowed: png, jpeg, webp, jpg, gif.</div>
                             </div>
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" id="btn-choose-existing" class="btn btn-outline-secondary btn-sm w-100">Choose existing</button>
+                            </div>
                             <div class="form-text mt-2">Filename relative to <code>/media/</code>.</div>
 
                             <div id="featured-preview" class="mt-2" style="display: <?= empty($post['featured_image']) ? 'none' : 'block' ?>;">
@@ -362,6 +366,32 @@
                                     </button>
                                 </div>
                                 <?php endif; ?>
+                            </div>
+                            <!-- Featured image library modal -->
+                            <div class="modal fade" id="featured-library-modal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Choose Featured Image</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <style>
+                                                .fn-shimmer { background: linear-gradient(90deg,#f0f0f0 25%,#e6e6e6 37%,#f0f0f0 63%); background-size: 400% 100%; animation: fn-shimmer 1.2s ease-in-out infinite; }
+                                                @keyframes fn-shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+                                                .fn-thumb-wrap{ cursor:pointer; border-radius:.25rem; overflow:hidden; transition: transform .18s ease, box-shadow .18s ease; }
+                                                .fn-thumb{ width:100%; height:auto; display:block; object-fit:cover; transition: transform .18s ease; transform-origin:center center; }
+                                                .fn-thumb-wrap:focus{ outline: 2px solid rgba(13,110,253,0.25); outline-offset: 2px; }
+                                                .fn-thumb-wrap:hover, .fn-thumb-wrap:focus{ transform: translateY(-4px) scale(1.03); box-shadow: 0 10px 30px rgba(0,0,0,0.28); z-index:1060; }
+                                            </style>
+                                            <div id="featured-library-grid" class="row g-2">
+                                                <div class="col-6 col-md-4 col-lg-3">
+                                                    <div class="ratio ratio-30x17 fn-shimmer" style="width:100%;padding:0;border-radius:.25rem;height:0;padding-bottom:52.5%;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
