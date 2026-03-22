@@ -116,6 +116,10 @@
 
             <div class="border-bottom border-1 mb-4 pb-3 d-flex align-items-center justify-content-between gap-3">
                 <h5 class="mb-0 text-secondary text-uppercase fw-semibold small">Manage Posts</h5>
+                <div class="d-flex align-items-center gap-2">
+                <a href="<?= site_url('admin/posts/create') ?>" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil-square me-1"></i><span class="d-none d-lg-inline">New Post</span>
+                </a>
                 <div class="btn-group" role="group" aria-label="Posts table actions">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" id="btn-status-filter" data-bs-toggle="dropdown" aria-expanded="false">
@@ -135,6 +139,7 @@
                     <button type="button" class="btn btn-outline-danger btn-sm" id="btn-delete" disabled>
                         <i class="bi bi-trash3-fill"></i><span class="d-none d-lg-inline"> Delete</span>
                     </button>
+                </div>
                 </div>
             </div>
 

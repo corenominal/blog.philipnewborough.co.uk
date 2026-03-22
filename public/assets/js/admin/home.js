@@ -147,8 +147,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 width:      "6rem",
                 className:  "text-center text-nowrap",
                 render: function(data, type, row) {
-                    return '<button class="btn btn-outline-secondary btn-sm btn-row-edit me-1" data-id="' + row.id + '" title="Edit" disabled>'
-                         + '<i class="bi bi-pencil-fill"></i></button>'
+                    return '<a href="/admin/posts/' + row.id + '/edit" class="btn btn-outline-secondary btn-sm btn-row-edit me-1" title="Edit">'
+                         + '<i class="bi bi-pencil-fill"></i></a>'
                          + '<button class="btn btn-outline-danger btn-sm btn-row-delete" data-id="' + row.id + '" title="Delete">'
                          + '<i class="bi bi-trash3-fill"></i></button>';
                 },

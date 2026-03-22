@@ -27,6 +27,16 @@ $routes->get('/admin/stats', 'Admin\Home::stats');
 $routes->get('/admin/posts/datatable', 'Admin\Home::postsDataTable');
 $routes->post('/admin/posts/delete', 'Admin\Home::deletePosts');
 
+// Admin post editor routes
+$routes->get('/admin/posts/create', 'Admin\Posts::create');
+$routes->post('/admin/posts/store', 'Admin\Posts::store');
+$routes->post('/admin/posts/preview', 'Admin\Posts::preview');
+// Featured image upload/remove endpoints
+$routes->post('/admin/posts/upload_featured_image', 'Admin\Posts::upload_featured_image');
+$routes->post('/admin/posts/remove_featured_image', 'Admin\Posts::remove_featured_image');
+$routes->get('/admin/posts/(:num)/edit', 'Admin\Posts::edit/$1');
+$routes->post('/admin/posts/(:num)/update', 'Admin\Posts::update/$1');
+
 // API routes
 $routes->match(['get', 'options'], '/api/test/ping', 'Api\Test::ping');
 

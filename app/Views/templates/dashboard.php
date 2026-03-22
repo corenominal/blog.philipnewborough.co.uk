@@ -109,7 +109,7 @@
                         <ul class="nav flex-column mb-3">
                             <li class="nav-item">
                                 <a class="nav-link d-flex align-items-center gap-2 text-white-50 px-3 py-2 active" href="/">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                    <i class="bi bi-house-fill"></i> Blog
                                 </a>
                             </li>
                         </ul>
@@ -127,6 +127,11 @@
                             <li class="nav-item">
                                 <a class="nav-link d-flex align-items-center gap-2 text-white-50 px-3 py-2" href="/admin#posts">
                                     <i class="bi bi-file-text-fill"></i> Posts
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center gap-2 text-white-50 px-3 py-2" href="/admin/posts/create">
+                                    <i class="bi bi-pencil-square"></i> New Post
                                 </a>
                             </li>
                         </ul>
