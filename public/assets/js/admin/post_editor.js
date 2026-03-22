@@ -106,12 +106,119 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Tab key inserts spaces instead of shifting focus
   bodyTextarea.addEventListener('keydown', function (e) {
+    // Helper to replace a range and set caret
+    function replaceRange(el, start, end, text, caretOffsetAfter) {
+      const before = el.value.substring(0, start);
+      const after = el.value.substring(end);
+      el.value = before + text + after;
+      const pos = before.length + (caretOffsetAfter == null ? text.length : caretOffsetAfter);
+      el.selectionStart = el.selectionEnd = pos;
+    }
+
+    // Tab: insert 4 spaces
     if (e.key === 'Tab') {
       e.preventDefault();
       const start = this.selectionStart;
       const end   = this.selectionEnd;
-      this.value  = this.value.substring(0, start) + '    ' + this.value.substring(end);
-      this.selectionStart = this.selectionEnd = start + 4;
+      replaceRange(this, start, end, '    ', 4);
+      markDirty();
+      updateCharCount();
+      schedulePreview();
+      return;
+    }
+
+    // Bold / Italic shortcuts: Ctrl/Cmd+B and Ctrl/Cmd+I
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      const k = ('' + e.key).toLowerCase();
+      if (k === 'b' || k === 'i') {
+        e.preventDefault();
+        const selStart = this.selectionStart;
+        const selEnd = this.selectionEnd;
+        const selected = this.value.substring(selStart, selEnd);
+        const wrapper = k === 'b' ? ['**', '**'] : ['*', '*'];
+        if (selStart === selEnd) {
+          // insert markers and put caret between
+          replaceRange(this, selStart, selEnd, wrapper[0] + wrapper[1], wrapper[0].length);
+        } else {
+          replaceRange(this, selStart, selEnd, wrapper[0] + selected + wrapper[1], wrapper[0].length + selected.length);
+          // reselect the original text (without wrappers)
+          this.selectionStart = selStart + wrapper[0].length;
+          this.selectionEnd = selStart + wrapper[0].length + selected.length;
+        }
+        markDirty();
+        updateCharCount();
+        schedulePreview();
+        return;
+      }
+    }
+
+    // Backtick handling: wrap selection in inline code, or expand `` + ` -> fenced block
+    if (e.key === '`' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const selStart = this.selectionStart;
+      const selEnd = this.selectionEnd;
+      const selected = this.value.substring(selStart, selEnd);
+
+      if (selStart !== selEnd) {
+        // wrap selection in single backticks
+        e.preventDefault();
+        replaceRange(this, selStart, selEnd, '`' + selected + '`', 1 + selected.length);
+        this.selectionStart = selStart + 1;
+        this.selectionEnd = selStart + 1 + selected.length;
+        markDirty();
+        schedulePreview();
+        updateCharCount();
+        return;
+      }
+
+      // If the two chars immediately before caret are `` then expand into a fenced block
+      const prev2 = this.value.substring(Math.max(0, selStart - 2), selStart);
+      if (prev2 === '``') {
+        e.preventDefault();
+        const before = this.value.substring(0, selStart - 2);
+        const after = this.value.substring(selEnd);
+        const insert = '```\n\n```';
+        this.value = before + insert + after;
+        // place caret on the blank line inside the fenced block
+        const caretPos = before.length + 4; // 3 backticks + newline
+        this.selectionStart = this.selectionEnd = caretPos;
+        markDirty();
+        schedulePreview();
+        updateCharCount();
+        return;
+      }
+
+      // otherwise allow the backtick to be typed normally
+      return;
+    }
+
+    // Auto-continue lists when pressing Enter on a list item
+    if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const selStart = this.selectionStart;
+      const selEnd = this.selectionEnd;
+      const val = this.value;
+      const lineStart = val.lastIndexOf('\n', selStart - 1) + 1;
+      const line = val.substring(lineStart, selStart);
+      // Match bullets (-, *, +), numbered lists (1.), and task lists (- [ ] / - [x])
+      const m = line.match(/^(\s*)([-*+]|(\d+)\.)\s+(\[[ xX]\]\s*)?/);
+      if (m) {
+        e.preventDefault();
+        const indent = m[1] || '';
+        const marker = m[2];
+        let nextMarker = marker;
+        if (/^\d+\.$/.test(marker)) {
+          // increment numbered list
+          const num = parseInt(m[3], 10) || 0;
+          nextMarker = (num + 1) + '.';
+        }
+        // preserve task-box prefix if present
+        const task = m[4] || '';
+        const insert = '\n' + indent + nextMarker + ' ' + task;
+        replaceRange(this, selStart, selEnd, insert, insert.length);
+        markDirty();
+        schedulePreview();
+        updateCharCount();
+        return;
+      }
     }
   });
 
