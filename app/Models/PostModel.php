@@ -42,6 +42,7 @@ class PostModel extends Model
 
     // Validation
     protected $validationRules = [
+        'id'     => 'permit_empty|integer',
         'title'  => 'required|min_length[3]|max_length[255]',
         'slug'   => 'required|alpha_dash|is_unique[posts.slug,id,{id}]',
         'status' => 'required|in_list[draft,published,revision,trashed]',
