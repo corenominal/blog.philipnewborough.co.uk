@@ -5,6 +5,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title><?= esc($title) ?> - <?= esc(config('App')->siteName) ?></title>
         <meta name="theme-color" content="#282A36">
+        <?php if (isset($og)): ?>
+        <meta property="og:type" content="<?= esc($og['type']) ?>">
+        <meta property="og:title" content="<?= esc($og['title']) ?>">
+        <meta property="og:url" content="<?= esc($og['url']) ?>">
+        <meta property="og:site_name" content="<?= esc($og['site_name']) ?>">
+        <?php if (isset($og['description'])): ?>
+        <meta property="og:description" content="<?= esc($og['description']) ?>">
+        <?php endif; ?>
+        <?php if (isset($og['image'])): ?>
+        <meta property="og:image" content="<?= esc($og['image']) ?>">
+        <meta property="og:image:width" content="<?= esc($og['image_width']) ?>">
+        <meta property="og:image:height" content="<?= esc($og['image_height']) ?>">
+        <?php endif; ?>
+        <?php endif; ?>
         <!-- Favicon and touch icons -->
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/icon-32x32.png">

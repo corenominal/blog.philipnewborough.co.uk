@@ -7,6 +7,14 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
+// Post permalink routes
+$routes->get('posts/(:segment)', 'Post::show/$1');
+$routes->get('posts/(:segment)/json', 'Post::showJson/$1');
+$routes->get('posts/(:segment)/markdown', 'Post::showMarkdown/$1');
+
+// Tag archive routes
+$routes->get('tags/(:segment)', 'Tag::show/$1');
+
 // Admin routes
 $routes->get('/admin', 'Admin\Home::index');
 $routes->get('/admin/datatable', 'Admin\Home::datatable');
