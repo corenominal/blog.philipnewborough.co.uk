@@ -512,18 +512,23 @@
                             <i class="bi bi-image me-1"></i> Featured Image
                         </div>
                         <div class="card-body">
-                            <div id="featured-dropzone" class="border rounded p-3 text-center mb-2" style="background:var(--bs-dark); cursor:pointer;">
+                            <div
+                                id="featured-dropzone"
+                                class="border rounded p-4 text-center mb-2"
+                                style="cursor: pointer; border-style: dashed !important;"
+                                tabindex="0"
+                                role="button"
+                                aria-label="Upload featured image"
+                            >
                                 <input type="file" id="field-featured-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
                                 <input
                                     id="field-featured-image"
-                                    type="text"
+                                    type="hidden"
                                     name="featured_image"
-                                    class="form-control form-control-sm font-monospace mb-2"
-                                    placeholder="Filename relative to /media/"
                                     value="<?= esc($val('featured_image')) ?>"
-                                    autocomplete="off"
                                 >
-                                <div class="small text-muted">Drop an image here, or click to choose. Must be exactly 1200 × 630px. Allowed: png, jpeg, webp, jpg, gif.</div>
+                                <i class="bi bi-cloud-arrow-up fs-2 d-block mb-2 opacity-50"></i>
+                                <div class="small text-muted">Drop an image here, or click to choose.<br>Must be exactly 1200 × 630px. Allowed: png, jpeg, webp, gif.</div>
                             </div>
                             <div id="featured-upload-error" class="alert alert-danger alert-dismissible mb-0 small" role="alert" hidden>
                                 <span id="featured-upload-error-msg"></span>
@@ -532,21 +537,19 @@
                             <div class="d-flex gap-2 mt-2">
                                 <button type="button" id="btn-choose-existing" class="btn btn-outline-secondary btn-sm w-100">Choose existing</button>
                             </div>
-                            <div class="form-text mt-2">Filename relative to <code>/media/</code>.</div>
-
                             <div id="featured-preview" class="mt-2" style="display: <?= empty($post['featured_image']) ? 'none' : 'block' ?>;">
                                 <?php if (!empty($post['featured_image'])): ?>
                                 <div class="position-relative d-block w-100">
                                     <img id="featured-thumb" src="<?= site_url('media/' . $post['featured_image']) ?>" alt="Featured image" style="width:100%; height:auto; object-fit:cover; display:block;" />
-                                    <button type="button" class="btn btn-outline-danger btn-sm position-absolute top-0 end-0 m-2" id="btn-remove-featured-image" aria-label="Remove featured image">
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" id="btn-remove-featured-image" aria-label="Remove featured image">
                                         <i class="bi bi-x"></i>
                                     </button>
                                 </div>
                                 <?php else: ?>
                                 <div class="position-relative d-block w-100">
                                     <img id="featured-thumb" src="" alt="Featured image" style="width:100%; height:auto; object-fit:cover; display:none;" />
-                                    <button type="button" class="btn btn-outline-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle" id="btn-remove-featured-image" style="display:none;" aria-label="Remove featured image">
-                                        <i class="bi bi-x-lg"></i>
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" id="btn-remove-featured-image" style="display:none;" aria-label="Remove featured image">
+                                        <i class="bi bi-x"></i>
                                     </button>
                                 </div>
                                 <?php endif; ?>
