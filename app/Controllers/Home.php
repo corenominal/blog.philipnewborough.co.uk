@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\MetaModel;
 use App\Models\PostModel;
 use App\Models\TagModel;
 
@@ -54,6 +55,9 @@ class Home extends BaseController
         }
 
         if ($latestPost) {
+            $metaModel = new MetaModel();
+            $videoMeta = $metaModel->where('post_id', $latestPost['id'])->where('meta_key', 'post_video')->first();
+            $latestPost['post_video'] = $videoMeta ? $videoMeta['meta_value'] : '';
             $latestPost['tags_list'] = $tagsByPost[$latestPost['id']] ?? [];
             $latestPost['body_html'] = str_replace('<img ', '<img loading="lazy" ', $latestPost['body_html']);
         }

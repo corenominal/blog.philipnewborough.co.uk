@@ -26,6 +26,13 @@
                         <?= esc($post['title_html'] ?? $post['title']) ?>
                     </h1>
                 </header>
+                <?php if (!empty($post['post_video'])): ?>
+                <div class="post__video ratio ratio-16x9 mb-4 rounded">
+                    <video controls class="w-100 h-100 object-fit-cover rounded">
+                        <source src="<?= base_url('media/' . esc($post['post_video'])) ?>">
+                    </video>
+                </div>
+                <?php endif; ?>
                 <?php if ((time() - strtotime($post['published_at'])) > 365 * 24 * 60 * 60): ?>
                 <div class="post__outdated alert alert-warning mb-4" role="alert">
                     <strong>Heads up:</strong> This post is over a year old and may be out of date.

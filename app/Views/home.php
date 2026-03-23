@@ -41,6 +41,13 @@
                         </a>
                     </h1>
                 </header>
+                <?php if (!empty($latestPost['post_video'])): ?>
+                <div class="post__video ratio ratio-16x9 mb-4 rounded">
+                    <video controls class="w-100 h-100 object-fit-cover rounded">
+                        <source src="<?= base_url('media/' . esc($latestPost['post_video'])) ?>">
+                    </video>
+                </div>
+                <?php endif; ?>
                 <div class="post__body e-content">
                     <?= $latestPost['body_html'] ?>
                 </div>

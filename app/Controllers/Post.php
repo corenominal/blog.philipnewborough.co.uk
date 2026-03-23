@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\MetaModel;
 use App\Models\PostModel;
 use App\Models\TagModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -31,6 +32,10 @@ class Post extends BaseController
 
         $tagModel = new TagModel();
         $post['tags_list'] = $tagModel->where('post_id', $post['id'])->findAll();
+
+        $metaModel = new MetaModel();
+        $videoMeta = $metaModel->where('post_id', $post['id'])->where('meta_key', 'post_video')->first();
+        $post['post_video'] = $videoMeta ? $videoMeta['meta_value'] : '';
 
         // Find similar posts by shared tags
         $similarPosts   = [];
