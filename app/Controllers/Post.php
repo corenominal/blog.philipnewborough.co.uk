@@ -30,6 +30,13 @@ class Post extends BaseController
             throw new PageNotFoundException();
         }
 
+        if (! session()->get('is_admin')) {
+            $postModel->set('hitcounter', 'hitcounter + 1', false)
+                      ->where('id', $post['id'])
+                      ->update();
+            $post['hitcounter'] = ($post['hitcounter'] ?? 0) + 1;
+        }
+
         $tagModel = new TagModel();
         $post['tags_list'] = $tagModel->where('post_id', $post['id'])->findAll();
 
