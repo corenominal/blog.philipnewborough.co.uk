@@ -96,6 +96,7 @@
         data-upload-url="<?= site_url('admin/posts/upload_featured_image') ?>"
         data-remove-url="<?= site_url('admin/posts/remove_featured_image') ?>"
         data-list-url="<?= site_url('admin/posts/list_featured_images') ?>"
+        data-image-upload-url="<?= site_url('admin/posts/upload_body_image') ?>"
         novalidate
     >
         <?= csrf_field() ?>
@@ -172,6 +173,20 @@
                                 aria-selected="false"
                             >
                                 <i class="bi bi-eye me-1"></i> Preview
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button
+                                class="nav-link"
+                                id="tab-images"
+                                data-bs-toggle="tab"
+                                data-bs-target="#pane-images"
+                                type="button"
+                                role="tab"
+                                aria-controls="pane-images"
+                                aria-selected="false"
+                            >
+                                <i class="bi bi-images me-1"></i> Images
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -285,6 +300,39 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Images pane -->
+                        <div class="tab-pane fade" id="pane-images" role="tabpanel" aria-labelledby="tab-images">
+                            <div class="p-3">
+                                <!-- Drop zone -->
+                                <div
+                                    id="image-upload-dropzone"
+                                    class="border rounded p-4 text-center mb-3"
+                                    style="cursor: pointer; border-style: dashed !important;"
+                                    tabindex="0"
+                                    role="button"
+                                    aria-label="Upload image"
+                                >
+                                    <input type="file" id="field-image-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden multiple>
+                                    <i class="bi bi-cloud-arrow-up fs-2 d-block mb-2 opacity-50"></i>
+                                    <div class="small text-muted">Drop images here, or click to choose.<br>Allowed: png, jpeg, webp, gif. Images wider than 1920px are resized automatically.</div>
+                                </div>
+                                <!-- Upload progress -->
+                                <div id="image-upload-progress" class="mb-3" hidden>
+                                    <div class="d-flex align-items-center gap-2 text-secondary small">
+                                        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+                                        Uploading&hellip;
+                                    </div>
+                                </div>
+                                <!-- Upload error -->
+                                <div id="image-upload-error" class="alert alert-danger alert-dismissible mb-3 small" role="alert" hidden>
+                                    <span id="image-upload-error-msg"></span>
+                                    <button type="button" class="btn-close" aria-label="Close"></button>
+                                </div>
+                                <!-- Uploaded images gallery -->
+                                <div id="image-gallery" class="d-flex flex-column gap-3"></div>
+                            </div>
+                        </div>
+
                         <!-- Preview pane -->
                         <div class="tab-pane fade" id="pane-preview" role="tabpanel" aria-labelledby="tab-preview">
                             <div class="post-editor__preview-pane p-4">

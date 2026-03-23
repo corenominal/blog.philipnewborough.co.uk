@@ -359,7 +359,120 @@ class Posts extends BaseController
         return $this->response->setJSON(['files' => $files]);
     }
 
+    /**
+     * AJAX endpoint: upload a body image for use within post content.
+     * Accepts any common image type. If the image width exceeds 1920px it is
+     * resized proportionally before saving. File is stored in public/media as
+     * {uuid}.{ext}.
+     * Returns JSON: { success: bool, filename: string, url: string, error?: string }
+     */
+    public function upload_body_image(): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $file = $this->request->getFile('image');
+
+        if (!$file || !$file->isValid()) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'No file uploaded.']);
+        }
+
+        $mime    = $file->getMimeType();
+        $allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+        if (!in_array($mime, $allowed, true)) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Invalid file type. Allowed: png, jpeg, webp, gif.']);
+        }
+
+        $tmpName  = $file->getTempName();
+        $sizeInfo = @getimagesize($tmpName);
+        if (!$sizeInfo) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Unable to read image dimensions.']);
+        }
+
+        [$width, $height] = [$sizeInfo[0], $sizeInfo[1]];
+
+        $ext = strtolower($file->getClientExtension() ?: pathinfo($file->getName(), PATHINFO_EXTENSION));
+        if ($ext === 'jpeg') {
+            $ext = 'jpg';
+        }
+
+        $uuid     = Uuid::uuid4()->toString();
+        $filename = $uuid . '.' . $ext;
+        $destDir  = FCPATH . 'media/';
+
+        if (!is_dir($destDir)) {
+            @mkdir($destDir, 0755, true);
+        }
+
+        $destPath = $destDir . $filename;
+
+        if ($width > 1920) {
+            $newWidth  = 1920;
+            $newHeight = (int) round($height * ($newWidth / $width));
+            try {
+                $this->resizeImage($tmpName, $destPath, $mime, $width, $height, $newWidth, $newHeight);
+            } catch (\Exception $e) {
+                return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => 'Failed to resize image.']);
+            }
+        } else {
+            try {
+                $file->move($destDir, $filename);
+            } catch (\Exception $e) {
+                return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => 'Failed to save uploaded file.']);
+            }
+        }
+
+        $url = site_url('media/' . $filename);
+
+        return $this->response->setJSON(['success' => true, 'filename' => $filename, 'url' => $url]);
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────────
+
+    /**
+     * Resize an image using GD to the given target dimensions, preserving
+     * alpha/transparency for PNG, WebP and GIF. Quality 85 for JPEG/WebP.
+     */
+    private function resizeImage(
+        string $src,
+        string $dest,
+        string $mime,
+        int $srcW,
+        int $srcH,
+        int $dstW,
+        int $dstH
+    ): void {
+        $srcImg = match ($mime) {
+            'image/jpeg' => \imagecreatefromjpeg($src),
+            'image/png'  => \imagecreatefrompng($src),
+            'image/webp' => \imagecreatefromwebp($src),
+            'image/gif'  => \imagecreatefromgif($src),
+            default      => false,
+        };
+
+        if (!$srcImg) {
+            throw new \RuntimeException('GD could not open source image.');
+        }
+
+        $dstImg = \imagecreatetruecolor($dstW, $dstH);
+
+        if (in_array($mime, ['image/png', 'image/webp', 'image/gif'], true)) {
+            \imagealphablend($dstImg, false);
+            \imagesavealpha($dstImg, true);
+            $transparent = \imagecolorallocatealpha($dstImg, 0, 0, 0, 127);
+            \imagefill($dstImg, 0, 0, $transparent);
+        }
+
+        \imagecopyresampled($dstImg, $srcImg, 0, 0, 0, 0, $dstW, $dstH, $srcW, $srcH);
+
+        match ($mime) {
+            'image/jpeg' => \imagejpeg($dstImg, $dest, 85),
+            'image/png'  => \imagepng($dstImg, $dest),
+            'image/webp' => \imagewebp($dstImg, $dest, 85),
+            'image/gif'  => \imagegif($dstImg, $dest),
+            default      => null,
+        };
+
+        \imagedestroy($srcImg);
+        \imagedestroy($dstImg);
+    }
 
     /**
      * Convert title and body from Markdown to HTML.

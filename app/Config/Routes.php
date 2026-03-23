@@ -36,6 +36,8 @@ $routes->post('/admin/posts/upload_featured_image', 'Admin\Posts::upload_feature
 $routes->post('/admin/posts/remove_featured_image', 'Admin\Posts::remove_featured_image');
 // List existing featured images for the post editor media library
 $routes->get('/admin/posts/list_featured_images', 'Admin\Posts::list_featured_images');
+// Body image upload (Images tab in post editor)
+$routes->post('/admin/posts/upload_body_image', 'Admin\Posts::upload_body_image');
 $routes->get('/admin/posts/(:num)/edit', 'Admin\Posts::edit/$1');
 $routes->post('/admin/posts/(:num)/update', 'Admin\Posts::update/$1');
 

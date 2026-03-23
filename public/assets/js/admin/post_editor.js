@@ -635,6 +635,156 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })();
 
+  // ── Image upload tab ──────────────────────────────────────────────────────
+  (function () {
+    const imageUploadUrl   = form ? form.dataset.imageUploadUrl : null;
+    const imageDropzone    = document.getElementById('image-upload-dropzone');
+    const imageFileInput   = document.getElementById('field-image-file');
+    const imageGallery     = document.getElementById('image-gallery');
+    const imageProgress    = document.getElementById('image-upload-progress');
+    const imageErrorEl     = document.getElementById('image-upload-error');
+    const imageErrorMsg    = document.getElementById('image-upload-error-msg');
+
+    if (!imageDropzone || !imageFileInput || !imageGallery || !imageUploadUrl) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
+    function showImageError(msg) {
+      if (imageErrorEl && imageErrorMsg) {
+        imageErrorMsg.textContent = msg;
+        imageErrorEl.hidden = false;
+        const closeBtn = imageErrorEl.querySelector('.btn-close');
+        if (closeBtn) closeBtn.onclick = function () { imageErrorEl.hidden = true; };
+      }
+    }
+
+    function clearImageError() {
+      if (imageErrorEl) imageErrorEl.hidden = true;
+    }
+
+    function escHtml(str) {
+      return str.replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+    }
+
+    function makeCopyButton(inputEl, btnEl) {
+      btnEl.addEventListener('click', function () {
+        navigator.clipboard.writeText(inputEl.value).then(function () {
+          const icon = btnEl.querySelector('i');
+          if (icon) {
+            const orig = icon.className;
+            icon.className = 'bi bi-clipboard-check';
+            setTimeout(function () { icon.className = orig; }, 1500);
+          }
+        });
+      });
+    }
+
+    function prependImageCard(url, filename) {
+      const mdValue  = '![Alt text](' + url + ')';
+
+      const card = document.createElement('div');
+      card.className = 'card border';
+      card.innerHTML = '<div class="card-body d-flex gap-3 align-items-start">' +
+        '<img src="' + escHtml(url) + '" alt="' + escHtml(filename) + '" ' +
+          'class="rounded border flex-shrink-0" style="width:120px;height:auto;object-fit:cover;">' +
+        '<div class="flex-grow-1 min-w-0">' +
+          '<label class="form-label small text-secondary mb-1">URL</label>' +
+          '<div class="input-group input-group-sm mb-2">' +
+            '<input type="text" class="form-control font-monospace" id="img-url-' + escHtml(filename) + '" value="' + escHtml(url) + '" readonly>' +
+            '<button class="btn btn-outline-secondary" type="button" title="Copy URL"><i class="bi bi-clipboard"></i></button>' +
+          '</div>' +
+          '<label class="form-label small text-secondary mb-1">Markdown</label>' +
+          '<div class="input-group input-group-sm">' +
+            '<input type="text" class="form-control font-monospace" id="img-md-' + escHtml(filename) + '" value="' + escHtml(mdValue) + '" readonly>' +
+            '<button class="btn btn-outline-secondary" type="button" title="Copy Markdown"><i class="bi bi-clipboard"></i></button>' +
+          '</div>' +
+        '</div>' +
+        '</div>';
+
+      const urlInput = card.querySelector('#img-url-' + CSS.escape(filename));
+      const mdInput  = card.querySelector('#img-md-' + CSS.escape(filename));
+      const btns     = card.querySelectorAll('.btn-outline-secondary');
+      if (urlInput && btns[0]) makeCopyButton(urlInput, btns[0]);
+      if (mdInput  && btns[1]) makeCopyButton(mdInput,  btns[1]);
+
+      imageGallery.insertBefore(card, imageGallery.firstChild);
+    }
+
+    function appendCsrfToFormData(fd) {
+      if (!form) return;
+      const csrfInput = form.querySelector('input[type="hidden"][name^="csrf"]');
+      if (csrfInput) fd.append(csrfInput.name, csrfInput.value);
+    }
+
+    function uploadImageFile(file) {
+      clearImageError();
+      if (allowedTypes.indexOf(file.type) === -1) {
+        showImageError('Invalid file type. Allowed: png, jpeg, webp, gif.');
+        return;
+      }
+
+      if (imageProgress) imageProgress.hidden = false;
+
+      const fd = new FormData();
+      fd.append('image', file, file.name);
+      appendCsrfToFormData(fd);
+
+      fetch(imageUploadUrl, {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (imageProgress) imageProgress.hidden = true;
+          if (!data || !data.success) {
+            showImageError((data && data.error) || 'Upload failed.');
+            return;
+          }
+          prependImageCard(data.url, data.filename);
+        })
+        .catch(function () {
+          if (imageProgress) imageProgress.hidden = true;
+          showImageError('Upload failed. Please try again.');
+        });
+    }
+
+    function handleFiles(files) {
+      Array.from(files).forEach(function (f) { uploadImageFile(f); });
+    }
+
+    // Click to open file picker
+    imageDropzone.addEventListener('click', function () { imageFileInput.click(); });
+    imageDropzone.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); imageFileInput.click(); }
+    });
+
+    // Drag-and-drop
+    imageDropzone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      imageDropzone.classList.add('border-primary');
+    });
+    imageDropzone.addEventListener('dragleave', function () {
+      imageDropzone.classList.remove('border-primary');
+    });
+    imageDropzone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      imageDropzone.classList.remove('border-primary');
+      const files = e.dataTransfer && e.dataTransfer.files;
+      if (files && files.length) handleFiles(files);
+    });
+
+    // File input change
+    imageFileInput.addEventListener('change', function () {
+      if (this.files && this.files.length) {
+        handleFiles(this.files);
+        this.value = '';
+      }
+    });
+  })();
+
   // ── Dirty-state tracking ─────────────────────────────────────────────────
   function markDirty() {
     if (!isDirty) {
