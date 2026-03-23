@@ -450,7 +450,7 @@
                             <i class="bi bi-image me-1"></i> Featured Image
                         </div>
                         <div class="card-body">
-                            <div id="featured-dropzone" class="border rounded p-3 text-center" style="background:var(--bs-dark); cursor:pointer;">
+                            <div id="featured-dropzone" class="border rounded p-3 text-center mb-2" style="background:var(--bs-dark); cursor:pointer;">
                                 <input type="file" id="field-featured-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
                                 <input
                                     id="field-featured-image"
@@ -462,6 +462,10 @@
                                     autocomplete="off"
                                 >
                                 <div class="small text-muted">Drop an image here, or click to choose. Must be exactly 1200 × 630px. Allowed: png, jpeg, webp, jpg, gif.</div>
+                            </div>
+                            <div id="featured-upload-error" class="alert alert-danger alert-dismissible mb-0 small" role="alert" hidden>
+                                <span id="featured-upload-error-msg"></span>
+                                <button type="button" class="btn-close" aria-label="Close"></button>
                             </div>
                             <div class="d-flex gap-2 mt-2">
                                 <button type="button" id="btn-choose-existing" class="btn btn-outline-secondary btn-sm w-100">Choose existing</button>

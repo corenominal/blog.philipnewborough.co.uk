@@ -410,9 +410,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
+    const uploadErrorEl = document.getElementById('featured-upload-error');
+    const uploadErrorMsg = document.getElementById('featured-upload-error-msg');
+
     function showUploadError(msg) {
-      // simple feedback for now
-      alert(msg);
+      if (uploadErrorEl && uploadErrorMsg) {
+        uploadErrorMsg.textContent = msg;
+        uploadErrorEl.hidden = false;
+        const closeBtn = uploadErrorEl.querySelector('.btn-close');
+        if (closeBtn) {
+          closeBtn.onclick = function () { uploadErrorEl.hidden = true; };
+        }
+      } else {
+        // eslint-disable-next-line no-alert
+        alert(msg);
+      }
+    }
+
+    function clearUploadError() {
+      if (uploadErrorEl) uploadErrorEl.hidden = true;
     }
 
     function appendCsrfToFormData(fd) {
@@ -425,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function uploadFile(file) {
       if (!file) return;
+      clearUploadError();
       if (allowedTypes.indexOf(file.type) === -1) {
         showUploadError('Invalid file type. Allowed: png, jpeg, webp, gif.');
         return;
