@@ -97,6 +97,8 @@
         data-remove-url="<?= site_url('admin/posts/remove_featured_image') ?>"
         data-list-url="<?= site_url('admin/posts/list_featured_images') ?>"
         data-image-upload-url="<?= site_url('admin/posts/upload_body_image') ?>"
+        data-video-upload-url="<?= site_url('admin/posts/upload_video') ?>"
+        data-video-remove-url="<?= site_url('admin/posts/remove_video') ?>"
         novalidate
     >
         <?= csrf_field() ?>
@@ -187,6 +189,20 @@
                                 aria-selected="false"
                             >
                                 <i class="bi bi-images me-1"></i> Images
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button
+                                class="nav-link"
+                                id="tab-video"
+                                data-bs-toggle="tab"
+                                data-bs-target="#pane-video"
+                                type="button"
+                                role="tab"
+                                aria-controls="pane-video"
+                                aria-selected="false"
+                            >
+                                <i class="bi bi-camera-video me-1"></i> Video
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -333,6 +349,57 @@
                             </div>
                         </div>
 
+                        <!-- Video pane -->
+                        <div class="tab-pane fade" id="pane-video" role="tabpanel" aria-labelledby="tab-video">
+                            <?php $postVideo = $post_video ?? ''; ?>
+                            <div class="p-3">
+                                <!-- Drop zone (hidden once a video is loaded) -->
+                                <div
+                                    id="video-upload-dropzone"
+                                    class="border rounded p-4 text-center mb-3"
+                                    style="cursor: pointer; border-style: dashed !important;<?= !empty($postVideo) ? ' display: none;' : '' ?>"
+                                    tabindex="0"
+                                    role="button"
+                                    aria-label="Upload video"
+                                >
+                                    <input type="file" id="field-video-file" accept="video/mp4,video/webm,video/ogg,video/quicktime" hidden>
+                                    <i class="bi bi-camera-video fs-2 d-block mb-2 opacity-50"></i>
+                                    <div class="small text-muted">Drop a video here, or click to choose.<br>Allowed: mp4, webm, ogg, mov.</div>
+                                </div>
+                                <!-- Upload progress -->
+                                <div id="video-upload-progress" class="mb-3" hidden>
+                                    <div class="d-flex align-items-center gap-2 text-secondary small">
+                                        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+                                        Uploading&hellip;
+                                    </div>
+                                </div>
+                                <!-- Upload error -->
+                                <div id="video-upload-error" class="alert alert-danger alert-dismissible mb-3 small" role="alert" hidden>
+                                    <span id="video-upload-error-msg"></span>
+                                    <button type="button" class="btn-close" aria-label="Close"></button>
+                                </div>
+                                <!-- Hidden input tracks the current video filename for form submission -->
+                                <input type="hidden" id="field-video-filename" name="video_filename" value="<?= esc($postVideo) ?>">
+                                <!-- Video preview (shown when a video is associated) -->
+                                <div id="video-preview"<?= empty($postVideo) ? ' hidden' : '' ?>>
+                                    <video
+                                        id="video-player"
+                                        controls
+                                        class="w-100 rounded border mb-2"
+                                        <?php if (!empty($postVideo)): ?>
+                                        src="<?= esc(site_url('media/' . $postVideo)) ?>"
+                                        <?php endif; ?>
+                                    ></video>
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
+                                        <small id="video-filename-display" class="text-secondary font-monospace text-truncate"><?= esc($postVideo) ?></small>
+                                        <button type="button" id="btn-remove-video" class="btn btn-danger btn-sm flex-shrink-0">
+                                            <i class="bi bi-trash me-1"></i> Remove video
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Preview pane -->
                         <div class="tab-pane fade" id="pane-preview" role="tabpanel" aria-labelledby="tab-preview">
                             <div class="post-editor__preview-pane p-4">
@@ -351,6 +418,9 @@
                                         <time class="post__meta text-muted small dt-published d-block mb-3" id="preview-date"></time>
                                         <h1 class="post__title display-5 fw-bold lh-sm mb-0 p-name" id="preview-title"></h1>
                                     </header>
+                                    <div id="preview-video-wrap" class="mb-4" hidden>
+                                        <video id="preview-video-player" controls class="w-100 rounded border"></video>
+                                    </div>
                                     <div class="post__body e-content" id="preview-body"></div>
                                     <div id="preview-tags-wrap" class="mt-4" hidden>
                                         <div class="post__tags d-flex flex-wrap gap-2" id="preview-tags"></div>

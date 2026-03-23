@@ -4,7 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class PostMetaModel extends Model
+class MetaModel extends Model
 {
     protected $table            = 'meta';
     protected $primaryKey       = 'id';

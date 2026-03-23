@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const previewBody     = document.getElementById('preview-body');
   const previewTagsWrap = document.getElementById('preview-tags-wrap');
   const previewTags     = document.getElementById('preview-tags');
+  const previewVideoWrap   = document.getElementById('preview-video-wrap');
+  const previewVideoPlayer = document.getElementById('preview-video-player');
 
   const uploadUrl = form ? form.dataset.uploadUrl : null;
   const removeUrl = form ? form.dataset.removeUrl : null;
@@ -323,6 +325,23 @@ document.addEventListener('DOMContentLoaded', function () {
     // Body HTML (server-rendered)
     // DOMPurify is not available in this project; the preview is admin-only trusted content
     previewBody.innerHTML = bodyHtml;
+
+    // Video
+    const videoFilenameInput = document.getElementById('field-video-filename');
+    const videoFilename = videoFilenameInput ? videoFilenameInput.value.trim() : '';
+    if (previewVideoWrap && previewVideoPlayer) {
+      if (videoFilename) {
+        const mediaUrl = window.location.origin + '/media/' + videoFilename;
+        if (previewVideoPlayer.getAttribute('src') !== mediaUrl) {
+          previewVideoPlayer.src = mediaUrl;
+          previewVideoPlayer.load();
+        }
+        previewVideoWrap.hidden = false;
+      } else {
+        previewVideoPlayer.removeAttribute('src');
+        previewVideoWrap.hidden = true;
+      }
+    }
 
     // Tags
     const rawTags = tagsInput ? tagsInput.value : '';
@@ -783,6 +802,151 @@ document.addEventListener('DOMContentLoaded', function () {
         this.value = '';
       }
     });
+  })();
+
+  // ── Video upload tab ──────────────────────────────────────────────────────
+  (function () {
+    const videoUploadUrl   = form ? form.dataset.videoUploadUrl : null;
+    const videoRemoveUrl   = form ? form.dataset.videoRemoveUrl : null;
+    const videoDropzone    = document.getElementById('video-upload-dropzone');
+    const videoFileInput   = document.getElementById('field-video-file');
+    const videoPreview     = document.getElementById('video-preview');
+    const videoPlayer      = document.getElementById('video-player');
+    const videoFilenameEl  = document.getElementById('video-filename-display');
+    const videoHiddenInput = document.getElementById('field-video-filename');
+    const videoProgress    = document.getElementById('video-upload-progress');
+    const videoErrorEl     = document.getElementById('video-upload-error');
+    const videoErrorMsg    = document.getElementById('video-upload-error-msg');
+    const btnRemoveVideo   = document.getElementById('btn-remove-video');
+
+    if (!videoDropzone || !videoFileInput || !videoUploadUrl) return;
+
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+
+    function showVideoError(msg) {
+      if (videoErrorEl && videoErrorMsg) {
+        videoErrorMsg.textContent = msg;
+        videoErrorEl.hidden = false;
+        const closeBtn = videoErrorEl.querySelector('.btn-close');
+        if (closeBtn) closeBtn.onclick = function () { videoErrorEl.hidden = true; };
+      }
+    }
+
+    function clearVideoError() {
+      if (videoErrorEl) videoErrorEl.hidden = true;
+    }
+
+    function appendCsrfToFormData(fd) {
+      if (!form) return;
+      const csrfInput = form.querySelector('input[type="hidden"][name^="csrf"]');
+      if (csrfInput) fd.append(csrfInput.name, csrfInput.value);
+    }
+
+    function showVideoPreview(url, filename) {
+      if (videoPlayer) { videoPlayer.src = url; videoPlayer.load(); }
+      if (videoFilenameEl) videoFilenameEl.textContent = filename;
+      if (videoHiddenInput) videoHiddenInput.value = filename;
+      if (videoPreview) videoPreview.hidden = false;
+      if (videoDropzone) videoDropzone.style.display = 'none';
+    }
+
+    function resetToDropzone() {
+      if (videoPlayer) { videoPlayer.pause(); videoPlayer.removeAttribute('src'); videoPlayer.load(); }
+      if (videoFilenameEl) videoFilenameEl.textContent = '';
+      if (videoHiddenInput) videoHiddenInput.value = '';
+      if (videoPreview) videoPreview.hidden = true;
+      if (videoDropzone) videoDropzone.style.display = '';
+    }
+
+    function uploadVideoFile(file) {
+      clearVideoError();
+      if (allowedTypes.indexOf(file.type) === -1) {
+        showVideoError('Invalid file type. Allowed: mp4, webm, ogg, mov.');
+        return;
+      }
+
+      if (videoProgress) videoProgress.hidden = false;
+
+      const postId = (form && form.dataset.postId) || '';
+      const fd = new FormData();
+      fd.append('video', file, file.name);
+      fd.append('post_id', postId);
+      appendCsrfToFormData(fd);
+
+      fetch(videoUploadUrl, {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (videoProgress) videoProgress.hidden = true;
+          if (!data || !data.success) {
+            showVideoError((data && data.error) || 'Upload failed.');
+            return;
+          }
+          showVideoPreview(data.url, data.filename);
+          markDirty();
+        })
+        .catch(function () {
+          if (videoProgress) videoProgress.hidden = true;
+          showVideoError('Upload failed. Please try again.');
+        });
+    }
+
+    // Dropzone interactions
+    videoDropzone.addEventListener('click', function () { videoFileInput.click(); });
+    videoDropzone.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); videoFileInput.click(); }
+    });
+    videoDropzone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      videoDropzone.classList.add('border-primary');
+    });
+    videoDropzone.addEventListener('dragleave', function () {
+      videoDropzone.classList.remove('border-primary');
+    });
+    videoDropzone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      videoDropzone.classList.remove('border-primary');
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) uploadVideoFile(f);
+    });
+
+    videoFileInput.addEventListener('change', function () {
+      const f = this.files && this.files[0];
+      if (f) { uploadVideoFile(f); this.value = ''; }
+    });
+
+    // Remove handler
+    if (btnRemoveVideo && videoRemoveUrl) {
+      btnRemoveVideo.addEventListener('click', function () {
+        const filename = videoHiddenInput ? videoHiddenInput.value.trim() : '';
+        if (!filename) {
+          resetToDropzone();
+          markDirty();
+          return;
+        }
+
+        const postId = (form && form.dataset.postId) || '';
+        const fd = new FormData();
+        fd.append('filename', filename);
+        fd.append('post_id', postId);
+        appendCsrfToFormData(fd);
+
+        fetch(videoRemoveUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data && data.success) {
+              resetToDropzone();
+              markDirty();
+            } else {
+              showVideoError((data && data.error) || 'Failed to remove video.');
+            }
+          })
+          .catch(function () { showVideoError('Failed to remove video.'); });
+      });
+    }
   })();
 
   // ── Dirty-state tracking ─────────────────────────────────────────────────

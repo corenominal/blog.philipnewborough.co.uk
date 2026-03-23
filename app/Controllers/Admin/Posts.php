@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Libraries\Markdown;
+use App\Models\MetaModel;
 use App\Models\PostModel;
 use App\Models\TagModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -26,7 +27,8 @@ class Posts extends BaseController
         // Provide list of existing tags for the datalist
         $tagModel = new TagModel();
         $tags = $tagModel->select('tag')->distinct()->orderBy('tag')->findAll();
-        $data['all_tags'] = array_column($tags, 'tag');
+        $data['all_tags']   = array_column($tags, 'tag');
+        $data['post_video'] = '';
 
         return view('admin/post_editor', $data);
     }
@@ -102,6 +104,17 @@ class Posts extends BaseController
         $postId = $postModel->getInsertID();
         $this->saveTags($tagModel, $postId, $tagsRaw);
 
+        // Save video meta if a video was uploaded during new-post creation
+        $videoFilename = trim($input['video_filename'] ?? '');
+        if (!empty($videoFilename)) {
+            $metaModel = new MetaModel();
+            $metaModel->save([
+                'post_id'    => $postId,
+                'meta_key'   => 'post_video',
+                'meta_value' => $videoFilename,
+            ]);
+        }
+
         return redirect()->to(site_url('admin/posts/' . $postId . '/edit'))
             ->with('success', 'Post created successfully.');
     }
@@ -136,6 +149,11 @@ class Posts extends BaseController
         $data['action'] = site_url('admin/posts/' . $id . '/update');
         $data['isNew']  = false;
         $data['all_tags'] = $allTags;
+
+        // Load video meta
+        $metaModel = new MetaModel();
+        $videoMeta = $metaModel->where('post_id', $id)->where('meta_key', 'post_video')->first();
+        $data['post_video'] = $videoMeta ? $videoMeta['meta_value'] : '';
 
         return view('admin/post_editor', $data);
     }
@@ -219,6 +237,20 @@ class Posts extends BaseController
         // Rebuild tags
         \Config\Database::connect()->table('tags')->where('post_id', $id)->delete();
         $this->saveTags($tagModel, $id, $tagsRaw);
+
+        // Sync video meta (ensures consistency if AJAX endpoints were not used, e.g. new post)
+        $videoFilename = trim($input['video_filename'] ?? '');
+        $metaModel     = new MetaModel();
+        if (!empty($videoFilename)) {
+            $existing = $metaModel->where('post_id', $id)->where('meta_key', 'post_video')->first();
+            if ($existing) {
+                $metaModel->update($existing['id'], ['meta_value' => $videoFilename]);
+            } else {
+                $metaModel->save(['post_id' => $id, 'meta_key' => 'post_video', 'meta_value' => $videoFilename]);
+            }
+        } else {
+            $metaModel->where('post_id', $id)->where('meta_key', 'post_video')->delete();
+        }
 
         return redirect()->to(site_url('admin/posts/' . $id . '/edit'))
             ->with('success', 'Post updated successfully.');
@@ -423,6 +455,98 @@ class Posts extends BaseController
         $url = site_url('media/' . $filename);
 
         return $this->response->setJSON(['success' => true, 'filename' => $filename, 'url' => $url]);
+    }
+
+    /**
+     * AJAX endpoint: upload a video file for a post.
+     * Accepts mp4, webm, ogg, and mov formats. File is stored in public/media as
+     * {uuid}.{ext}. If a post_id is supplied the meta table is updated immediately;
+     * otherwise the filename is returned for the JS to track via the hidden form
+     * field and persisted on store/update.
+     * Returns JSON: { success: bool, filename: string, url: string, error?: string }
+     */
+    public function upload_video(): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $file = $this->request->getFile('video');
+
+        if (!$file || !$file->isValid()) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'No file uploaded.']);
+        }
+
+        $mime    = $file->getMimeType();
+        $allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+        if (!in_array($mime, $allowed, true)) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Invalid file type. Allowed: mp4, webm, ogg, mov.']);
+        }
+
+        // Derive extension from validated MIME type to prevent extension spoofing
+        $ext = match ($mime) {
+            'video/mp4'       => 'mp4',
+            'video/webm'      => 'webm',
+            'video/ogg'       => 'ogg',
+            'video/quicktime' => 'mov',
+            default           => 'mp4',
+        };
+
+        $uuid     = Uuid::uuid4()->toString();
+        $filename = $uuid . '.' . $ext;
+        $destDir  = FCPATH . 'media/';
+
+        if (!is_dir($destDir)) {
+            @mkdir($destDir, 0755, true);
+        }
+
+        try {
+            $file->move($destDir, $filename);
+        } catch (\Exception $e) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => 'Failed to save uploaded file.']);
+        }
+
+        // If post_id provided, upsert meta immediately so the record is always current
+        $postId = (int) $this->request->getPost('post_id');
+        if ($postId > 0) {
+            $metaModel = new MetaModel();
+            $existing  = $metaModel->where('post_id', $postId)->where('meta_key', 'post_video')->first();
+            if ($existing) {
+                $metaModel->update($existing['id'], ['meta_value' => $filename]);
+            } else {
+                $metaModel->save(['post_id' => $postId, 'meta_key' => 'post_video', 'meta_value' => $filename]);
+            }
+        }
+
+        $url = site_url('media/' . $filename);
+
+        return $this->response->setJSON(['success' => true, 'filename' => $filename, 'url' => $url]);
+    }
+
+    /**
+     * AJAX endpoint: remove a video file associated with a post.
+     * Deletes the file from public/media and removes the post_video meta record.
+     * Expects POST fields: filename, post_id.
+     */
+    public function remove_video(): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $filename = $this->request->getPost('filename');
+        $postId   = (int) $this->request->getPost('post_id');
+
+        if (empty($filename)) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'No filename provided.']);
+        }
+
+        // Delete file from disk
+        $basename = basename($filename);
+        $path     = FCPATH . 'media/' . $basename;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+
+        // Remove meta record
+        if ($postId > 0) {
+            $metaModel = new MetaModel();
+            $metaModel->where('post_id', $postId)->where('meta_key', 'post_video')->delete();
+        }
+
+        return $this->response->setJSON(['success' => true]);
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────

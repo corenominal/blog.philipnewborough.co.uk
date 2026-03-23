@@ -38,6 +38,9 @@ $routes->post('/admin/posts/remove_featured_image', 'Admin\Posts::remove_feature
 $routes->get('/admin/posts/list_featured_images', 'Admin\Posts::list_featured_images');
 // Body image upload (Images tab in post editor)
 $routes->post('/admin/posts/upload_body_image', 'Admin\Posts::upload_body_image');
+// Video upload/remove endpoints
+$routes->post('/admin/posts/upload_video', 'Admin\Posts::upload_video');
+$routes->post('/admin/posts/remove_video', 'Admin\Posts::remove_video');
 $routes->get('/admin/posts/(:num)/edit', 'Admin\Posts::edit/$1');
 $routes->post('/admin/posts/(:num)/update', 'Admin\Posts::update/$1');
 
