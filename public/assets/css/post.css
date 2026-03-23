@@ -35,3 +35,39 @@
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* Keep breadcrumb items on a single line and truncate when too wide.
+   Exempt the first item from truncation so it remains fully visible. */
+.breadcrumb {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    align-items: center;
+}
+.breadcrumb .breadcrumb-item {
+    min-width: 0; /* allow flex items to shrink */
+}
+/* Don't truncate the first breadcrumb (e.g. "Home") */
+.breadcrumb .breadcrumb-item:first-child,
+.breadcrumb .breadcrumb-item:first-child a,
+.breadcrumb .breadcrumb-item:first-child .breadcrumb-item.active {
+    overflow: visible;
+    white-space: nowrap;
+    text-overflow: clip;
+    flex: 0 0 auto;
+}
+/* Truncate all other breadcrumb items with ellipsis */
+.breadcrumb .breadcrumb-item:not(:first-child) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1 1 auto;
+}
+.breadcrumb .breadcrumb-item:not(:first-child) a,
+.breadcrumb .breadcrumb-item:not(:first-child).active {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
