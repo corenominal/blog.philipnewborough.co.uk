@@ -320,15 +320,16 @@ class Posts extends BaseController
             return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'No filename provided.']);
         }
 
-        $basename = basename($filename);
-        $path = FCPATH . 'media/' . $basename;
-        if (is_file($path)) {
-            try {
-                @unlink($path);
-            } catch (\Exception $e) {
-                // ignore unlink errors
-            }
-        }
+        // Don't attempt to delete the file, just return success. The filename is stored in the post record and will be ignored if not present, so this is effectively a "soft delete" that avoids potential filesystem issues.
+        // $basename = basename($filename);
+        // $path = FCPATH . 'media/' . $basename;
+        // if (is_file($path)) {
+        //     try {
+        //         @unlink($path);
+        //     } catch (\Exception $e) {
+        //         // ignore unlink errors
+        //     }
+        // }
 
         return $this->response->setJSON(['success' => true]);
     }
