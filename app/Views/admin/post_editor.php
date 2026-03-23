@@ -316,7 +316,21 @@
 
                 <!-- Excerpt -->
                 <div>
-                    <label for="field-excerpt" class="form-label text-secondary small text-uppercase fw-semibold mb-1">Excerpt</label>
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label for="field-excerpt" class="form-label text-secondary small text-uppercase fw-semibold mb-0">Excerpt</label>
+                        <small
+                            id="excerpt-char-count"
+                            class="text-secondary"
+                            role="button"
+                            tabindex="0"
+                            data-bs-toggle="popover"
+                            data-bs-trigger="click"
+                            data-bs-placement="left"
+                            data-bs-html="true"
+                            data-bs-title="Excerpt Length Guide"
+                            data-bs-content="<ul class='mb-0 ps-3 small'><li><span class='text-success fw-semibold'>Optimal (110–135):</span> Safe zone, unlikely to be truncated on mobile or desktop.</li><li class='mt-1'><span class='text-warning fw-semibold'>Acceptable (40–109 or 136–160):</span> Works, but may be cut short on some platforms.</li><li class='mt-1'><span class='text-danger fw-semibold'>Too short (&lt;40):</span> Preview looks empty and less professional.</li><li class='mt-1'><span class='text-danger fw-semibold'>Too long (&gt;160):</span> Almost certainly replaced with an ellipsis (&hellip;).</li></ul>"
+                        >0 chars <i class="bi bi-info-circle"></i></small>
+                    </div>
                     <textarea
                         id="field-excerpt"
                         name="excerpt"

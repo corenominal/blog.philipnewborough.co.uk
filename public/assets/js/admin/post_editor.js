@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const tagBadges     = document.getElementById('tag-badges');
   const pubAtInput    = document.getElementById('field-published-at');
   const statusSelect  = document.getElementById('field-status');
-  const charCount     = document.getElementById('body-char-count');
+  const charCount         = document.getElementById('body-char-count');
+  const excerptTextarea   = document.getElementById('field-excerpt');
+  const excerptCharCount  = document.getElementById('excerpt-char-count');
 
   const btnGenerateSlug = document.getElementById('btn-generate-slug');
   const btnCopySlug     = document.getElementById('btn-copy-slug');
@@ -90,6 +92,27 @@ document.addEventListener('DOMContentLoaded', function () {
       icon.className = 'bi bi-clipboard-check';
       setTimeout(function () { icon.className = 'bi bi-clipboard'; }, 1500);
     });
+  });
+
+  // ── Excerpt character count ─────────────────────────────────────────────
+  function updateExcerptCharCount() {
+    const len = excerptTextarea.value.length;
+    excerptCharCount.firstChild.textContent = len + ' char' + (len === 1 ? '' : 's') + ' ';
+    excerptCharCount.className = 'small';
+    if (len === 0) {
+      excerptCharCount.classList.add('text-secondary');
+    } else if (len < 40 || len > 160) {
+      excerptCharCount.classList.add('text-danger');
+    } else if (len >= 110 && len <= 135) {
+      excerptCharCount.classList.add('text-success');
+    } else {
+      excerptCharCount.classList.add('text-warning');
+    }
+  }
+
+  excerptTextarea.addEventListener('input', function () {
+    updateExcerptCharCount();
+    markDirty();
   });
 
   // ── Body editor ──────────────────────────────────────────────────────────
@@ -687,4 +710,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Init ─────────────────────────────────────────────────────────────────
   updateCharCount();
+  updateExcerptCharCount();
+
+  // Initialise excerpt length guide popover
+  const excerptPopoverEl = document.getElementById('excerpt-char-count');
+  if (excerptPopoverEl) {
+    const excerptPopover = new bootstrap.Popover(excerptPopoverEl, { container: 'body' });
+    // Dismiss when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!excerptPopoverEl.contains(e.target)) {
+        excerptPopover.hide();
+      }
+    });
+  }
 });
