@@ -100,8 +100,9 @@
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-shrink-0">
                     <small class="text-secondary"><?= date('d M Y', strtotime($post['created_at'])) ?></small>
+                    <a href="<?= site_url('admin/posts/' . $post['id'] . '/edit') ?>" class="btn btn-outline-secondary btn-sm py-0" title="Edit"><i class="bi bi-pencil-fill"></i></a>
                     <?php if ($post['status'] === 'published'): ?>
-                    <a href="<?= site_url('posts/' . esc($post['slug'])) ?>" target="_blank" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-box-arrow-up-right"></i></a>
+                    <a href="<?= site_url('posts/' . esc($post['slug'])) ?>" target="_blank" class="btn btn-outline-secondary btn-sm py-0" title="View"><i class="bi bi-box-arrow-up-right"></i></a>
                     <?php endif; ?>
                 </div>
             </div>
