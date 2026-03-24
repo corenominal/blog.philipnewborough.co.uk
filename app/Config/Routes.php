@@ -46,6 +46,7 @@ $routes->post('/admin/posts/(:num)/update', 'Admin\Posts::update/$1');
 
 // API routes
 $routes->match(['get', 'options'], '/api/test/ping', 'Api\Test::ping');
+$routes->match(['get', 'options'], '/api/posts/latest', 'Api\Posts::latest');
 
 // Command line routes
 $routes->cli('cli/test/index/(:segment)', 'CLI\Test::index/$1');
