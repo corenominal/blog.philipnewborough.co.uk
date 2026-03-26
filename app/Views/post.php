@@ -23,7 +23,7 @@
                         <?= esc(date('j F Y', strtotime($post['published_at']))) ?>
                     </time>
                     <h1 class="post__title display-5 fw-bold lh-sm mb-0 p-name">
-                        <?= esc($post['title_html'] ?? $post['title']) ?>
+                        <?= esc(html_entity_decode($post['title_html'] ?? $post['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?>
                     </h1>
                 </header>
                 <?php if (!empty($post['post_video'])): ?>
@@ -84,7 +84,7 @@
                     </time>
                     <div class="post-list__body">
                         <a class="post-list__title text-white fw-semibold text-decoration-none link-hover p-name u-url" href="<?= site_url('posts/' . esc($related['slug'])) ?>">
-                            <?= esc($related['title_html'] ?? $related['title']) ?>
+                            <?= esc(html_entity_decode($related['title_html'] ?? $related['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?>
                         </a>
                         <?php if (!empty($related['excerpt'])): ?>
                         <p class="post-list__excerpt text-muted small mb-0 mt-1 p-summary">

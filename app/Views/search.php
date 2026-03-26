@@ -48,7 +48,7 @@
                         </time>
                         <div class="post-list__body">
                             <a class="post-list__title text-white fw-semibold text-decoration-none link-hover p-name u-url" href="<?= site_url('posts/' . esc($post['slug'])) ?>">
-                                <?= esc($post['title_html'] ?? $post['title']) ?>
+                                <?= esc(html_entity_decode($post['title_html'] ?? $post['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?>
                             </a>
                             <?php if (!empty($post['excerpt'])): ?>
                             <p class="post-list__excerpt text-muted small mb-0 mt-1 p-summary">

@@ -37,7 +37,7 @@
                     </div>
                     <h1 class="post__title display-5 fw-bold lh-sm mb-0">
                         <a class="p-name u-url text-white text-decoration-none" href="<?= site_url('posts/' . esc($latestPost['slug'])) ?>">
-                            <?= esc($latestPost['title_html'] ?? $latestPost['title']) ?>
+                            <?= esc(html_entity_decode($latestPost['title_html'] ?? $latestPost['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?>
                         </a>
                     </h1>
                 </header>
@@ -94,7 +94,7 @@
                     </time>
                     <div class="post-list__body">
                         <a class="post-list__title text-white fw-semibold text-decoration-none link-hover p-name u-url" href="<?= site_url('posts/' . esc($post['slug'])) ?>">
-                            <?= esc($post['title_html'] ?? $post['title']) ?>
+                            <?= esc(html_entity_decode($post['title_html'] ?? $post['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?>
                         </a>
                         <?php if (!empty($post['excerpt'])): ?>
                         <p class="post-list__excerpt text-muted small mb-0 mt-1 p-summary">

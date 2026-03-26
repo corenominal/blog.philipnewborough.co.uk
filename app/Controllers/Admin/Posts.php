@@ -617,7 +617,7 @@ class Posts extends BaseController
             if (!empty($titleRaw)) {
                 $markdown->setMarkdown('# ' . $titleRaw);
                 $result    = $markdown->convert();
-                $titleHtml = strip_tags($result['html'] ?? $titleRaw);
+                $titleHtml = html_entity_decode(strip_tags($result['html'] ?? $titleRaw), ENT_QUOTES | ENT_HTML5, 'UTF-8');
             }
 
             if (!empty($bodyRaw)) {
