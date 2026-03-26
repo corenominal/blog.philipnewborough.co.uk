@@ -27,6 +27,7 @@ class Filters extends BaseFilters
      */
     private const AUTH_EXCEPTIONS = [
         '/',
+        'home/posts',
         'posts/*',
         'tags/*',
         'search',
@@ -43,6 +44,7 @@ class Filters extends BaseFilters
      */
     private const OPTIONAL_AUTH_ROUTES = [
         '/',
+        'home/posts',
         'posts/*',
         'tags/*',
         'search',

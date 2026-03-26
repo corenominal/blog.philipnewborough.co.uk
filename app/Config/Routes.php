@@ -44,6 +44,9 @@ $routes->post('/admin/posts/remove_video', 'Admin\Posts::remove_video');
 $routes->get('/admin/posts/(:num)/edit', 'Admin\Posts::edit/$1');
 $routes->post('/admin/posts/(:num)/update', 'Admin\Posts::update/$1');
 
+// Home more posts (infinite scroll)
+$routes->get('/home/posts', 'Home::morePosts');
+
 // API routes
 $routes->match(['get', 'options'], '/api/test/ping', 'Api\Test::ping');
 $routes->match(['get', 'options'], '/api/posts/latest', 'Api\Posts::latest');

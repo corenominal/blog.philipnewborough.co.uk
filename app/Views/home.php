@@ -86,9 +86,9 @@
     <div class="row mt-5 mb-5">
         <div class="col-12 col-lg-8 offset-lg-2">
             <h2 class="h6 text-uppercase text-muted fw-semibold mb-3" style="letter-spacing:.1em;">More posts</h2>
-            <ol class="post-list list-unstyled mb-0">
-                <?php foreach ($otherPosts as $index => $post): ?>
-                <li class="post-list__item h-entry d-flex align-items-baseline gap-3 py-3<?= $index < count($otherPosts) - 1 ? ' border-bottom' : '' ?>">
+            <ol id="post-list" class="post-list list-unstyled mb-0">
+                <?php foreach ($otherPosts as $post): ?>
+                <li class="post-list__item h-entry d-flex align-items-baseline gap-3 py-3 border-bottom">
                     <time class="post-list__date text-muted small text-nowrap flex-shrink-0 dt-published" datetime="<?= esc(date('Y-m-d\TH:i:sP', strtotime($post['published_at']))) ?>">
                         <?= esc(date('j M Y', strtotime($post['published_at']))) ?>
                     </time>
@@ -114,6 +114,18 @@
                 </li>
                 <?php endforeach; ?>
             </ol>
+            <?php if (!empty($hasMorePosts)): ?>
+            <div
+                id="post-list-sentinel"
+                class="py-4 text-center"
+                data-offset="<?= count($otherPosts) ?>"
+                data-url="<?= site_url('home/posts') ?>"
+            >
+                <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                    <span class="visually-hidden">Loading&hellip;</span>
+                </div>
+            </div>
+            <?php endif; ?>
         </div> <!-- /.col -->
     </div> <!-- /.row -->
     <?php endif; ?>
