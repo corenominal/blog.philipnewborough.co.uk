@@ -233,7 +233,6 @@
                                 name="body"
                                 class="form-control font-monospace post-editor__body-textarea border-0 rounded-0 rounded-bottom"
                                 placeholder="Write your post in Markdown…"
-                                spellcheck="false"
                             ><?= esc($val('body')) ?></textarea>
                         </div>
 
