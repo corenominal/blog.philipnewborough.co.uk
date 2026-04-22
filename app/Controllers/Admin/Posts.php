@@ -12,6 +12,34 @@ use Ramsey\Uuid\Uuid;
 class Posts extends BaseController
 {
     /**
+     * Detect whether this request expects JSON (AJAX/fetch).
+     *
+     * @return bool
+     */
+    private function expectsJsonResponse(): bool
+    {
+        return $this->request->isAJAX()
+            || str_contains(strtolower($this->request->getHeaderLine('Accept')), 'application/json');
+    }
+
+    /**
+     * Build a JSON response and include a fresh CSRF token payload.
+     *
+     * @param array<string, mixed> $payload
+     * @param int $statusCode
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    private function jsonWithCsrf(array $payload, int $statusCode = 200): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $payload['csrf'] = [
+            'name' => csrf_token(),
+            'hash' => csrf_hash(),
+        ];
+
+        return $this->response->setStatusCode($statusCode)->setJSON($payload);
+    }
+
+    /**
      * Show the "create new post" editor.
      *
      * @return string
@@ -40,7 +68,7 @@ class Posts extends BaseController
      */
     public function store(): \CodeIgniter\HTTP\ResponseInterface
     {
-        helper('url');
+        helper(['url', 'security']);
 
         $input     = $this->request->getPost();
         $postModel = new PostModel();
@@ -93,11 +121,27 @@ class Posts extends BaseController
             }
 
             if (!empty($errors)) {
+                if ($this->expectsJsonResponse()) {
+                    return $this->jsonWithCsrf([
+                        'success' => false,
+                        'message' => 'Please fix the highlighted errors and try again.',
+                        'errors'  => $errors,
+                    ], 422);
+                }
+
                 return redirect()->back()->withInput()->with('errors', $errors);
             }
         }
 
         if (!$postModel->save($postData)) {
+            if ($this->expectsJsonResponse()) {
+                return $this->jsonWithCsrf([
+                    'success' => false,
+                    'message' => 'Unable to save this post right now.',
+                    'errors'  => $postModel->errors(),
+                ], 422);
+            }
+
             return redirect()->back()->withInput()->with('errors', $postModel->errors());
         }
 
@@ -115,8 +159,19 @@ class Posts extends BaseController
             ]);
         }
 
-        return redirect()->to(site_url('admin/posts/' . $postId . '/edit'))
-            ->with('success', 'Post created successfully.');
+        $editUrl = site_url('admin/posts/' . $postId . '/edit');
+
+        if ($this->expectsJsonResponse()) {
+            return $this->jsonWithCsrf([
+                'success'    => true,
+                'message'    => 'Post created successfully.',
+                'post_id'    => $postId,
+                'edit_url'   => $editUrl,
+                'update_url' => site_url('admin/posts/' . $postId . '/update'),
+            ]);
+        }
+
+        return redirect()->to($editUrl)->with('success', 'Post created successfully.');
     }
 
     /**
@@ -166,7 +221,7 @@ class Posts extends BaseController
      */
     public function update(int $id): \CodeIgniter\HTTP\ResponseInterface
     {
-        helper('url');
+        helper(['url', 'security']);
 
         $postModel = new PostModel();
         $tagModel  = new TagModel();
@@ -226,11 +281,27 @@ class Posts extends BaseController
             }
 
             if (!empty($errors)) {
+                if ($this->expectsJsonResponse()) {
+                    return $this->jsonWithCsrf([
+                        'success' => false,
+                        'message' => 'Please fix the highlighted errors and try again.',
+                        'errors'  => $errors,
+                    ], 422);
+                }
+
                 return redirect()->back()->withInput()->with('errors', $errors);
             }
         }
 
         if (!$postModel->save($postData)) {
+            if ($this->expectsJsonResponse()) {
+                return $this->jsonWithCsrf([
+                    'success' => false,
+                    'message' => 'Unable to update this post right now.',
+                    'errors'  => $postModel->errors(),
+                ], 422);
+            }
+
             return redirect()->back()->withInput()->with('errors', $postModel->errors());
         }
 
@@ -252,8 +323,19 @@ class Posts extends BaseController
             $metaModel->where('post_id', $id)->where('meta_key', 'post_video')->delete();
         }
 
-        return redirect()->to(site_url('admin/posts/' . $id . '/edit'))
-            ->with('success', 'Post updated successfully.');
+        $editUrl = site_url('admin/posts/' . $id . '/edit');
+
+        if ($this->expectsJsonResponse()) {
+            return $this->jsonWithCsrf([
+                'success'    => true,
+                'message'    => 'Post updated successfully.',
+                'post_id'    => $id,
+                'edit_url'   => $editUrl,
+                'update_url' => site_url('admin/posts/' . $id . '/update'),
+            ]);
+        }
+
+        return redirect()->to($editUrl)->with('success', 'Post updated successfully.');
     }
 
     /**

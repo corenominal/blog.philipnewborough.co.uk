@@ -86,6 +86,27 @@
     </script>
     <?php endif; ?>
 
+    <div class="position-fixed end-0 p-3" style="z-index:1200; top: 60px;">
+        <div id="save-message-success" class="toast text-bg-success align-items-center" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle-fill me-2"></i><span id="save-message-success-text">Post saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        <div id="save-message-errors" class="toast text-bg-danger align-items-center mt-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Please fix the following errors:</strong>
+                    <ul id="save-message-errors-list" class="mb-0 mt-1 ps-3"></ul>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Form ────────────────────────────────────────────────────────────── -->
     <form
         id="post-editor-form"

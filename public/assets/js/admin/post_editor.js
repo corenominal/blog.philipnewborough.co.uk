@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnGenerateSlug = document.getElementById('btn-generate-slug');
   const btnCopySlug     = document.getElementById('btn-copy-slug');
   const btnQuickPublish = document.getElementById('btn-quick-publish');
+  const saveSuccessAlert = document.getElementById('save-message-success');
+  const saveSuccessText = document.getElementById('save-message-success-text');
+  const saveErrorsAlert = document.getElementById('save-message-errors');
+  const saveErrorsList = document.getElementById('save-message-errors-list');
+  const submitButtons = form ? form.querySelectorAll('button[type="submit"]') : [];
 
   const previewUrl      = form.dataset.previewUrl;
 
@@ -46,12 +51,15 @@ document.addEventListener('DOMContentLoaded', function () {
   const unsavedToast    = bootstrap.Toast.getOrCreateInstance(
     document.getElementById('unsaved-toast'),
   );
+  const saveSuccessToast = saveSuccessAlert ? bootstrap.Toast.getOrCreateInstance(saveSuccessAlert) : null;
+  const saveErrorsToast = saveErrorsAlert ? bootstrap.Toast.getOrCreateInstance(saveErrorsAlert) : null;
 
   // ── State ────────────────────────────────────────────────────────────────
   let isDirty        = false;
   let previewDirty   = true;  // preview needs a refresh
   let previewTimer   = null;
   let slugUserEdited = slugInput.value.trim() !== '';
+  let isSaving       = false;
   // tags array state (derived from hidden CSV input)
   let tagsArray = [];
 
@@ -974,21 +982,147 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Clear dirty flag on form submit
-  form.addEventListener('submit', function () {
-    isDirty = false;
-    unsavedToast.hide();
-
-    // If quick-publish button triggered the submit, set status to published
-    const active = document.activeElement;
-    if (btnQuickPublish && active === btnQuickPublish) {
-      statusSelect.value = 'published';
-      if (pubAtInput && !pubAtInput.value) {
-        const pad  = function (n) { return String(n).padStart(2, '0'); };
-        const now  = new Date();
-        pubAtInput.value = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate())
-          + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-      }
+  function clearSaveMessages() {
+    if (saveSuccessToast) {
+      saveSuccessToast.hide();
     }
+    if (saveErrorsToast) {
+      saveErrorsToast.hide();
+    }
+    if (saveErrorsList) {
+      saveErrorsList.innerHTML = '';
+    }
+  }
+
+  function showSaveSuccess(message) {
+    if (saveSuccessText) {
+      saveSuccessText.textContent = message || 'Post saved successfully.';
+    }
+    if (saveErrorsToast) {
+      saveErrorsToast.hide();
+    }
+    if (saveSuccessToast) {
+      saveSuccessToast.show();
+    }
+  }
+
+  function showSaveErrors(errors, fallbackMessage) {
+    if (!saveErrorsAlert || !saveErrorsList) {
+      // eslint-disable-next-line no-alert
+      alert(fallbackMessage || 'Unable to save this post.');
+      return;
+    }
+
+    saveErrorsList.innerHTML = '';
+    const list = Array.isArray(errors) ? errors : Object.values(errors || {});
+    if (list.length === 0 && fallbackMessage) {
+      list.push(fallbackMessage);
+    }
+
+    list.forEach(function (msg) {
+      const item = document.createElement('li');
+      item.textContent = msg;
+      saveErrorsList.appendChild(item);
+    });
+
+    if (saveSuccessToast) {
+      saveSuccessToast.hide();
+    }
+    if (saveErrorsToast) {
+      saveErrorsToast.show();
+    }
+  }
+
+  function updateCsrfToken(payload) {
+    if (!payload || !payload.csrf || !payload.csrf.name) return;
+
+    const csrfInput = form.querySelector('input[type="hidden"][name^="csrf"]');
+    if (!csrfInput) return;
+
+    csrfInput.name = payload.csrf.name;
+    csrfInput.value = payload.csrf.hash || '';
+  }
+
+  function setSavingState(saving) {
+    isSaving = saving;
+    submitButtons.forEach(function (button) {
+      button.disabled = saving;
+    });
+  }
+
+  function applyQuickPublishIfNeeded(submitter) {
+    if (!btnQuickPublish || submitter !== btnQuickPublish) return;
+
+    statusSelect.value = 'published';
+    if (pubAtInput && !pubAtInput.value) {
+      const pad  = function (n) { return String(n).padStart(2, '0'); };
+      const now  = new Date();
+      pubAtInput.value = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate())
+        + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    }
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    if (isSaving) return;
+
+    const submitter = e.submitter || document.activeElement;
+    applyQuickPublishIfNeeded(submitter);
+
+    const formData = new FormData(form);
+    if (submitter && submitter.name === '_save_action' && submitter.value) {
+      formData.set('_save_action', submitter.value);
+    }
+
+    clearSaveMessages();
+    setSavingState(true);
+
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json'
+      }
+    })
+      .then(function (res) {
+        return res.json().then(function (payload) {
+          return { ok: res.ok, payload };
+        }).catch(function () {
+          return { ok: res.ok, payload: null };
+        });
+      })
+      .then(function (result) {
+        const payload = result.payload || {};
+        updateCsrfToken(payload);
+
+        if (!result.ok || payload.success === false) {
+          showSaveErrors(payload.errors || [], payload.message || 'Unable to save this post.');
+          return;
+        }
+
+        isDirty = false;
+        unsavedToast.hide();
+        showSaveSuccess(payload.message || 'Post saved successfully.');
+
+        if (payload.post_id) {
+          form.dataset.postId = String(payload.post_id);
+        }
+        if (payload.update_url) {
+          form.action = payload.update_url;
+        }
+        if (payload.edit_url && window.location.pathname !== new URL(payload.edit_url, window.location.origin).pathname) {
+          window.history.replaceState({}, document.title, payload.edit_url);
+        }
+      })
+      .catch(function () {
+        showSaveErrors([], 'Unable to save this post right now. Please try again.');
+      })
+      .finally(function () {
+        setSavingState(false);
+      });
   });
 
   // ── Sidebar: highlight active nav link ──────────────────────────────────
