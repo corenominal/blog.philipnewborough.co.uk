@@ -180,7 +180,7 @@
                                 aria-controls="pane-write"
                                 aria-selected="true"
                             >
-                                <i class="bi bi-pencil me-1"></i> Write
+                                <i class="bi bi-pencil"></i><span class="d-none d-md-inline ms-1"> Write</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -194,7 +194,7 @@
                                 aria-controls="pane-preview"
                                 aria-selected="false"
                             >
-                                <i class="bi bi-eye me-1"></i> Preview
+                                <i class="bi bi-eye"></i><span class="d-none d-md-inline ms-1"> Preview</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -208,7 +208,7 @@
                                 aria-controls="pane-images"
                                 aria-selected="false"
                             >
-                                <i class="bi bi-images me-1"></i> Images
+                                <i class="bi bi-images"></i><span class="d-none d-md-inline ms-1"> Images</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -222,7 +222,7 @@
                                 aria-controls="pane-video"
                                 aria-selected="false"
                             >
-                                <i class="bi bi-camera-video me-1"></i> Video
+                                <i class="bi bi-camera-video"></i><span class="d-none d-md-inline ms-1"> Video</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -236,7 +236,7 @@
                                 aria-controls="pane-help"
                                 aria-selected="false"
                             >
-                                <i class="bi bi-question-circle me-1"></i> Help
+                                <i class="bi bi-question-circle"></i><span class="d-none d-md-inline ms-1"> Help</span>
                             </button>
                         </li>
                         <li class="ms-auto d-flex align-items-center pe-2">
