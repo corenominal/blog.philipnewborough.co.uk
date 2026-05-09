@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const btnAiAnalyse  = document.getElementById('btn-ai-analyse');
   const btnAiRewrite  = document.getElementById('btn-ai-rewrite');
+  const btnAiOutline  = document.getElementById('btn-ai-outline');
 
   const btnGenerateSlug = document.getElementById('btn-generate-slug');
   const btnCopySlug     = document.getElementById('btn-copy-slug');
@@ -1165,6 +1166,181 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   })();
+
+  // ── AI ───────────────────────────────────────────────────────────────────
+  (function () {
+    const aiOutlineUrl     = form.dataset.aiOutlineUrl;
+    const aiModelsUrl      = form.dataset.aiModelsUrl;
+    const outlineModal     = new bootstrap.Modal(document.getElementById('ai-outline-modal'));
+    const outlineTopic     = document.getElementById('ai-outline-topic');
+    const outlineSubmit    = document.getElementById('btn-ai-outline-submit');
+    const outlineSpinner   = document.getElementById('ai-outline-spinner');
+    const outlineModalErr  = document.getElementById('ai-outline-modal-error');
+
+    const aiDescriptions   = document.getElementById('ai-action-descriptions');
+    const aiResult         = document.getElementById('ai-result');
+    const aiResultLabel    = document.getElementById('ai-result-label');
+    const aiResultBody     = document.getElementById('ai-result-body');
+    const aiError          = document.getElementById('ai-error');
+    const btnAiClear       = document.getElementById('btn-ai-clear');
+    const aiModelSelect    = document.getElementById('ai-model-select');
+
+    const MODEL_PREF_KEY   = 'ai-model-preference';
+
+    function getCookie(name) {
+      const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function authHeaders() {
+      return {
+        'user-uuid': getCookie('user_uuid'),
+        'apikey':    getCookie('apikey'),
+      };
+    }
+
+    function selectedModel() {
+      return aiModelSelect.value;
+    }
+
+    // ── Model selector ───────────────────────────────────────────────────────
+    async function loadModels() {
+      try {
+        const res = await fetch(aiModelsUrl, { headers: authHeaders() });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (!data.models || !data.models.length) throw new Error();
+
+        const saved = localStorage.getItem(MODEL_PREF_KEY);
+        aiModelSelect.innerHTML = '';
+        data.models.forEach(function (name) {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          if (name === saved) opt.selected = true;
+          aiModelSelect.appendChild(opt);
+        });
+        aiModelSelect.disabled = false;
+      } catch (_) {
+        aiModelSelect.innerHTML = '<option value="">No models available</option>';
+      }
+    }
+
+    aiModelSelect.addEventListener('change', function () {
+      localStorage.setItem(MODEL_PREF_KEY, aiModelSelect.value);
+    });
+
+    // ── Pane helpers ─────────────────────────────────────────────────────────
+    function showAiResult(label, html) {
+      aiDescriptions.hidden = true;
+      aiError.hidden = true;
+      aiResultLabel.textContent = label;
+      aiResultBody.innerHTML = html;
+      aiResult.hidden = false;
+    }
+
+    function resetAiPane() {
+      aiResult.hidden = true;
+      aiError.hidden = true;
+      aiDescriptions.hidden = false;
+      aiResultBody.innerHTML = '';
+    }
+
+    function renderOutline(outline) {
+      const ol = document.createElement('ol');
+      ol.className = 'ps-3 mb-0 small';
+      outline.forEach(function (section) {
+        const li = document.createElement('li');
+        li.className = 'mb-2';
+        const title = document.createElement('span');
+        title.className = 'fw-semibold';
+        title.textContent = section.heading;
+        li.appendChild(title);
+        if (section.subheadings && section.subheadings.length) {
+          const sub = document.createElement('ul');
+          sub.className = 'mt-1 ps-3';
+          section.subheadings.forEach(function (sh) {
+            const subLi = document.createElement('li');
+            subLi.className = 'text-secondary';
+            subLi.textContent = sh;
+            sub.appendChild(subLi);
+          });
+          li.appendChild(sub);
+        }
+        ol.appendChild(li);
+      });
+      return ol.outerHTML;
+    }
+
+    // ── Outline action ───────────────────────────────────────────────────────
+    btnAiOutline.addEventListener('click', function () {
+      outlineTopic.value = (document.getElementById('field-title') || {}).value || '';
+      outlineModalErr.hidden = true;
+      outlineSubmit.disabled = false;
+      outlineModal.show();
+    });
+
+    document.getElementById('ai-outline-modal').addEventListener('shown.bs.modal', function () {
+      outlineTopic.select();
+      outlineTopic.focus();
+    });
+
+    outlineTopic.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); outlineSubmit.click(); }
+    });
+
+    outlineSubmit.addEventListener('click', async function () {
+      const topic = outlineTopic.value.trim();
+      if (!topic) {
+        outlineModalErr.textContent = 'Please enter a topic or working title.';
+        outlineModalErr.hidden = false;
+        outlineTopic.focus();
+        return;
+      }
+
+      const headers = authHeaders();
+      if (!headers['user-uuid'] || !headers['apikey']) {
+        outlineModalErr.textContent = 'Authentication cookies are missing. Please log in again.';
+        outlineModalErr.hidden = false;
+        return;
+      }
+
+      outlineModalErr.hidden = true;
+      outlineSubmit.disabled = true;
+      outlineSpinner.hidden = false;
+
+      try {
+        const res = await fetch(aiOutlineUrl, {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+          body: JSON.stringify({ topic: topic, model: selectedModel() }),
+        });
+
+        if (!res.ok) {
+          throw new Error('The server returned an error (' + res.status + '). Please try again.');
+        }
+
+        const data = await res.json();
+        if (!data.outline || !Array.isArray(data.outline)) {
+          throw new Error('Unexpected response format from the AI service.');
+        }
+
+        outlineModal.hide();
+        localStorage.setItem(MODEL_PREF_KEY, selectedModel());
+        showAiResult('Outline: ' + topic, renderOutline(data.outline));
+      } catch (err) {
+        outlineModalErr.textContent = err.message || 'An unexpected error occurred.';
+        outlineModalErr.hidden = false;
+      } finally {
+        outlineSubmit.disabled = false;
+        outlineSpinner.hidden = true;
+      }
+    });
+
+    btnAiClear.addEventListener('click', resetAiPane);
+
+    loadModels();
+  }());
 
   // ── Init ─────────────────────────────────────────────────────────────────
   updateCharCount();

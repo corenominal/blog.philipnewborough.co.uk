@@ -119,6 +119,8 @@
         data-image-upload-url="<?= site_url('admin/posts/upload_body_image') ?>"
         data-video-upload-url="<?= site_url('admin/posts/upload_video') ?>"
         data-video-remove-url="<?= site_url('admin/posts/remove_video') ?>"
+        data-ai-outline-url="<?= esc(config('Urls')->ai) ?>api/blog/outline"
+        data-ai-models-url="<?= esc(config('Urls')->ai) ?>api/ollama/list"
         novalidate
     >
         <?= csrf_field() ?>
@@ -436,10 +438,17 @@
                         <!-- AI pane -->
                         <div class="tab-pane fade" id="pane-ai" role="tabpanel" aria-labelledby="tab-ai">
                             <div class="p-3">
-                                <div class="btn-group mb-4" role="group" aria-label="AI actions">
-                                    <button type="button" class="btn btn-outline-secondary" id="btn-ai-analyse">Analyse</button>
-                                    <button type="button" class="btn btn-outline-secondary" id="btn-ai-rewrite">Rewrite</button>
-                                    <button type="button" class="btn btn-outline-secondary" id="btn-ai-outline">Outline</button>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="btn-group" role="group" aria-label="AI actions">
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-ai-analyse">Analyse</button>
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-ai-rewrite">Rewrite</button>
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-ai-outline">Outline</button>
+                                    </div>
+                                    <div id="ai-model-wrap" style="min-width: 10rem;">
+                                        <select class="form-select form-select-sm" id="ai-model-select" aria-label="AI model" disabled>
+                                            <option value="">Loading models…</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <dl class="small text-secondary" id="ai-action-descriptions">
                                     <dt class="mb-1">Analyse</dt>
@@ -449,6 +458,14 @@
                                     <dt class="mb-1">Outline</dt>
                                     <dd class="mb-0">Generates a suggested structure for a blog post based on a given topic or working title. Returns a hierarchy of H2 sections with optional H3 subheadings, suitable for use as a writing plan before drafting begins.</dd>
                                 </dl>
+                                <div id="ai-result" hidden>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="small text-secondary fw-semibold" id="ai-result-label"></span>
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-secondary" id="btn-ai-clear">Clear</button>
+                                    </div>
+                                    <div id="ai-result-body"></div>
+                                </div>
+                                <div id="ai-error" class="alert alert-danger small mb-0" role="alert" hidden></div>
                             </div>
                         </div>
 
@@ -752,4 +769,34 @@
         </div>
     </div>
 </div>
+<!-- AI Outline modal -->
+<div class="modal fade" id="ai-outline-modal" tabindex="-1" aria-labelledby="ai-outline-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ai-outline-modal-label">Generate Outline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label for="ai-outline-topic" class="form-label">Topic or working title</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="ai-outline-topic"
+                    placeholder="e.g. Getting started with CodeIgniter 4"
+                    autocomplete="off"
+                >
+                <div id="ai-outline-modal-error" class="alert alert-danger small mt-3 mb-0" role="alert" hidden></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btn-ai-outline-submit">
+                    <span id="ai-outline-spinner" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" hidden></span>
+                    Generate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
