@@ -1337,8 +1337,56 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ── Rewrite action ───────────────────────────────────────────────────────
-    function renderRewrite(data, originalTitle) {
+    function computeLineDiff(original, rewritten) {
+      const a = original.split('\n');
+      const b = rewritten.split('\n');
+      const m = a.length, n = b.length;
+
+      const dp = Array.from({ length: m + 1 }, function () { return new Array(n + 1).fill(0); });
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          dp[i][j] = a[i - 1] === b[j - 1]
+            ? dp[i - 1][j - 1] + 1
+            : Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+
+      const hunks = [];
+      let i = m, j = n;
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+          hunks.unshift({ type: 'same', line: a[i - 1] });
+          i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          hunks.unshift({ type: 'add', line: b[j - 1] });
+          j--;
+        } else {
+          hunks.unshift({ type: 'remove', line: a[i - 1] });
+          i--;
+        }
+      }
+      return hunks;
+    }
+
+    function renderDiffHtml(hunks) {
+      return hunks.map(function (h) {
+        const esc = h.line.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        if (h.type === 'add') {
+          return '<span style="background:rgba(25,135,84,.12);display:block">+ ' + esc + '</span>';
+        }
+        if (h.type === 'remove') {
+          return '<span style="background:rgba(220,53,69,.12);display:block">- ' + esc + '</span>';
+        }
+        return '<span style="display:block">  ' + esc + '</span>';
+      }).join('');
+    }
+
+    function renderRewrite(data, originalContent, originalTitle) {
       const titleChanged = data.title && data.title !== originalTitle;
+      const hunks        = computeLineDiff(originalContent, data.content);
+      const hasChanges   = hunks.some(function (h) { return h.type !== 'same'; });
+      const preStyle     = 'white-space: pre-wrap; word-break: break-word; max-height: 20rem; overflow-y: auto;';
+
       let html = '';
 
       if (titleChanged) {
@@ -1348,15 +1396,23 @@ document.addEventListener('DOMContentLoaded', function () {
              +  '</div>';
       }
 
-      html += '<div class="mb-3">'
-           +    '<div class="small text-secondary fw-semibold mb-1">Rewritten content</div>'
-           +    '<pre id="ai-rewrite-content" class="small border rounded p-2 mb-0" style="white-space: pre-wrap; word-break: break-word; max-height: 20rem; overflow-y: auto;">'
-           +    data.content.replace(/</g, '&lt;')
-           +    '</pre>'
-           +  '</div>'
-           +  '<button type="button" class="btn btn-sm btn-primary" id="btn-ai-apply-rewrite">'
-           +    'Apply rewrite'
-           +  '</button>';
+      if (!hasChanges) {
+        html += '<p class="small text-secondary">No changes were made.</p>';
+      } else {
+        html += '<ul class="nav nav-tabs nav-tabs mb-2" id="rewrite-tabs">'
+             +    '<li class="nav-item"><button class="nav-link py-1 small active" type="button" data-bs-toggle="tab" data-bs-target="#rewrite-pane-diff">Diff</button></li>'
+             +    '<li class="nav-item"><button class="nav-link py-1 small" type="button" data-bs-toggle="tab" data-bs-target="#rewrite-pane-raw">Markdown</button></li>'
+             +  '</ul>'
+             +  '<div class="tab-content mb-3">'
+             +    '<div class="tab-pane show active" id="rewrite-pane-diff">'
+             +      '<pre class="small border rounded p-2 mb-0 font-monospace" style="' + preStyle + '">' + renderDiffHtml(hunks) + '</pre>'
+             +    '</div>'
+             +    '<div class="tab-pane" id="rewrite-pane-raw">'
+             +      '<pre class="small border rounded p-2 mb-0" style="' + preStyle + '">' + data.content.replace(/</g, '&lt;') + '</pre>'
+             +    '</div>'
+             +  '</div>'
+             +  '<button type="button" class="btn btn-sm btn-primary" id="btn-ai-apply-rewrite">Apply rewrite</button>';
+      }
 
       return html;
     }
@@ -1369,8 +1425,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const originalTitle = titleInput.value.trim();
-      const originalHtml  = btnAiRewrite.innerHTML;
+      const originalTitle   = titleInput.value.trim();
+      const originalContent = bodyTextarea.value;
+      const originalHtml    = btnAiRewrite.innerHTML;
       btnAiAnalyse.disabled = true;
       btnAiRewrite.disabled = true;
       btnAiRewrite.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
@@ -1383,7 +1440,7 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
           body: JSON.stringify({
             title:   originalTitle,
-            content: bodyTextarea.value,
+            content: originalContent,
             model:   selectedModel(),
           }),
         });
@@ -1398,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         localStorage.setItem(MODEL_PREF_KEY, selectedModel());
-        showAiResult('Rewrite', renderRewrite(data, originalTitle));
+        showAiResult('Rewrite', renderRewrite(data, originalContent, originalTitle));
 
         document.getElementById('btn-ai-apply-rewrite').addEventListener('click', function () {
           if (data.title && data.title !== originalTitle) {
