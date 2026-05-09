@@ -1399,9 +1399,10 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!hasChanges) {
         html += '<p class="small text-secondary">No changes were made.</p>';
       } else {
-        html += '<ul class="nav nav-tabs nav-tabs mb-2" id="rewrite-tabs">'
+        html += '<ul class="nav nav-tabs mb-2" id="rewrite-tabs">'
              +    '<li class="nav-item"><button class="nav-link py-1 small active" type="button" data-bs-toggle="tab" data-bs-target="#rewrite-pane-diff">Diff</button></li>'
              +    '<li class="nav-item"><button class="nav-link py-1 small" type="button" data-bs-toggle="tab" data-bs-target="#rewrite-pane-raw">Markdown</button></li>'
+             +    '<li class="nav-item"><button class="nav-link py-1 small" type="button" id="rewrite-tab-preview" data-bs-toggle="tab" data-bs-target="#rewrite-pane-preview">Preview</button></li>'
              +  '</ul>'
              +  '<div class="tab-content mb-3">'
              +    '<div class="tab-pane show active" id="rewrite-pane-diff">'
@@ -1409,6 +1410,13 @@ document.addEventListener('DOMContentLoaded', function () {
              +    '</div>'
              +    '<div class="tab-pane" id="rewrite-pane-raw">'
              +      '<pre class="small border rounded p-2 mb-0" style="' + preStyle + '">' + data.content.replace(/</g, '&lt;') + '</pre>'
+             +    '</div>'
+             +    '<div class="tab-pane" id="rewrite-pane-preview">'
+             +      '<div class="border rounded p-3" style="max-height:20rem;overflow-y:auto">'
+             +        '<div class="post__body e-content" id="rewrite-preview-body">'
+             +          '<p class="text-secondary small mb-0">Loading preview…</p>'
+             +        '</div>'
+             +      '</div>'
              +    '</div>'
              +  '</div>'
              +  '<button type="button" class="btn btn-sm btn-primary" id="btn-ai-apply-rewrite">Apply rewrite</button>';
@@ -1457,15 +1465,38 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem(MODEL_PREF_KEY, selectedModel());
         showAiResult('Rewrite', renderRewrite(data, originalContent, originalTitle));
 
-        document.getElementById('btn-ai-apply-rewrite').addEventListener('click', function () {
-          if (data.title && data.title !== originalTitle) {
-            titleInput.value = data.title;
-            titleInput.dispatchEvent(new Event('input'));
-          }
-          bodyTextarea.value = data.content;
-          bodyTextarea.dispatchEvent(new Event('input'));
-          resetAiPane();
-        });
+        const applyBtn = document.getElementById('btn-ai-apply-rewrite');
+        if (applyBtn) {
+          applyBtn.addEventListener('click', function () {
+            if (data.title && data.title !== originalTitle) {
+              titleInput.value = data.title;
+              titleInput.dispatchEvent(new Event('input'));
+            }
+            bodyTextarea.value = data.content;
+            bodyTextarea.dispatchEvent(new Event('input'));
+            resetAiPane();
+          });
+        }
+
+        const previewTab = document.getElementById('rewrite-tab-preview');
+        if (previewTab) {
+          let previewFetched = false;
+          previewTab.addEventListener('shown.bs.tab', function () {
+            if (previewFetched) return;
+            previewFetched = true;
+            const previewBody = document.getElementById('rewrite-preview-body');
+            fetch(previewUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ markdown: data.content }),
+            })
+              .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
+              .then(function (d) { previewBody.innerHTML = d.body_html || ''; })
+              .catch(function () {
+                previewBody.innerHTML = '<p class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Preview unavailable.</p>';
+              });
+          });
+        }
       } catch (err) {
         aiError.textContent = err.message || 'An unexpected error occurred.';
         aiError.hidden = false;
