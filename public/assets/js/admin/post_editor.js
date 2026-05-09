@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const excerptTextarea   = document.getElementById('field-excerpt');
   const excerptCharCount  = document.getElementById('excerpt-char-count');
 
+  const btnAiAnalyse  = document.getElementById('btn-ai-analyse');
+  const btnAiRewrite  = document.getElementById('btn-ai-rewrite');
+
   const btnGenerateSlug = document.getElementById('btn-generate-slug');
   const btnCopySlug     = document.getElementById('btn-copy-slug');
   const btnQuickPublish = document.getElementById('btn-quick-publish');
@@ -131,8 +134,15 @@ document.addEventListener('DOMContentLoaded', function () {
     charCount.textContent = len.toLocaleString() + ' char' + (len === 1 ? '' : 's');
   }
 
+  function updateAiButtons() {
+    const empty = bodyTextarea.value.trim() === '';
+    if (btnAiAnalyse) btnAiAnalyse.disabled = empty;
+    if (btnAiRewrite) btnAiRewrite.disabled = empty;
+  }
+
   bodyTextarea.addEventListener('input', function () {
     updateCharCount();
+    updateAiButtons();
     markDirty();
     schedulePreview();
   });
@@ -1158,6 +1168,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Init ─────────────────────────────────────────────────────────────────
   updateCharCount();
+  updateAiButtons();
   updateExcerptCharCount();
 
   // Initialise excerpt length guide popover

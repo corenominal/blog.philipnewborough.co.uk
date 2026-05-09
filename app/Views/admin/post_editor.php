@@ -228,6 +228,20 @@
                         <li class="nav-item" role="presentation">
                             <button
                                 class="nav-link"
+                                id="tab-ai"
+                                data-bs-toggle="tab"
+                                data-bs-target="#pane-ai"
+                                type="button"
+                                role="tab"
+                                aria-controls="pane-ai"
+                                aria-selected="false"
+                            >
+                                <i class="bi bi-stars"></i><span class="d-none d-md-inline ms-1"> AI</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button
+                                class="nav-link"
                                 id="tab-help"
                                 data-bs-toggle="tab"
                                 data-bs-target="#pane-help"
@@ -416,6 +430,25 @@
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- AI pane -->
+                        <div class="tab-pane fade" id="pane-ai" role="tabpanel" aria-labelledby="tab-ai">
+                            <div class="p-3">
+                                <div class="btn-group mb-4" role="group" aria-label="AI actions">
+                                    <button type="button" class="btn btn-outline-secondary" id="btn-ai-analyse">Analyse</button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btn-ai-rewrite">Rewrite</button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btn-ai-outline">Outline</button>
+                                </div>
+                                <dl class="small text-secondary" id="ai-action-descriptions">
+                                    <dt class="mb-1">Analyse</dt>
+                                    <dd class="mb-3">Analyses a blog post using Ollama and returns a concise summary of the content along with actionable suggestions for improvement across areas such as structure, clarity, tone, SEO, and accessibility.</dd>
+                                    <dt class="mb-1">Rewrite</dt>
+                                    <dd class="mb-3">Rewrites a blog post to fix typos, spelling mistakes, grammar errors, and punctuation issues, and to improve sentence flow and readability. The author's original style, voice, and tone are preserved throughout. No new information is added and the structure is kept intact.</dd>
+                                    <dt class="mb-1">Outline</dt>
+                                    <dd class="mb-0">Generates a suggested structure for a blog post based on a given topic or working title. Returns a hierarchy of H2 sections with optional H3 subheadings, suitable for use as a writing plan before drafting begins.</dd>
+                                </dl>
                             </div>
                         </div>
 
