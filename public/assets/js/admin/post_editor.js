@@ -981,6 +981,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (el === titleInput || el === slugInput || el === bodyTextarea || el === tagsInput || el === pubAtInput) {
       return; // already handled above
     }
+    if (el.id === 'ai-model-select') return;
     el.addEventListener('change', markDirty);
   });
 
