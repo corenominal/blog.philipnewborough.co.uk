@@ -1170,6 +1170,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ── AI ───────────────────────────────────────────────────────────────────
   (function () {
     const aiOutlineUrl     = form.dataset.aiOutlineUrl;
+    const aiAnalyseUrl     = form.dataset.aiAnalyseUrl;
     const aiModelsUrl      = form.dataset.aiModelsUrl;
     const outlineModal     = new bootstrap.Modal(document.getElementById('ai-outline-modal'));
     const outlineTopic     = document.getElementById('ai-outline-topic');
@@ -1271,6 +1272,67 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       return ol.outerHTML;
     }
+
+    // ── Analyse action ───────────────────────────────────────────────────────
+    function renderAnalysis(data) {
+      let html = '<p class="small mb-3">' + data.summary.replace(/</g, '&lt;') + '</p>';
+      if (data.suggestions && data.suggestions.length) {
+        html += '<dl class="small mb-0">';
+        data.suggestions.forEach(function (s) {
+          html += '<dt class="mb-1">' + s.area.replace(/</g, '&lt;') + '</dt>'
+               +  '<dd class="mb-3 text-secondary">' + s.suggestion.replace(/</g, '&lt;') + '</dd>';
+        });
+        html += '</dl>';
+      }
+      return html;
+    }
+
+    btnAiAnalyse.addEventListener('click', async function () {
+      const headers = authHeaders();
+      if (!headers['user-uuid'] || !headers['apikey']) {
+        aiError.textContent = 'Authentication cookies are missing. Please log in again.';
+        aiError.hidden = false;
+        return;
+      }
+
+      const originalHtml = btnAiAnalyse.innerHTML;
+      btnAiAnalyse.disabled = true;
+      btnAiAnalyse.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+      btnAiRewrite.disabled = true;
+      btnAiOutline.disabled = true;
+      resetAiPane();
+
+      try {
+        const res = await fetch(aiAnalyseUrl, {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+          body: JSON.stringify({
+            title:   titleInput.value.trim(),
+            content: bodyTextarea.value,
+            model:   selectedModel(),
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error('The server returned an error (' + res.status + '). Please try again.');
+        }
+
+        const data = await res.json();
+        if (!data.summary) {
+          throw new Error('Unexpected response format from the AI service.');
+        }
+
+        localStorage.setItem(MODEL_PREF_KEY, selectedModel());
+        showAiResult('Analysis', renderAnalysis(data));
+      } catch (err) {
+        aiError.textContent = err.message || 'An unexpected error occurred.';
+        aiError.hidden = false;
+      } finally {
+        btnAiAnalyse.innerHTML = originalHtml;
+        updateAiButtons();
+        btnAiOutline.disabled = false;
+      }
+    });
 
     // ── Outline action ───────────────────────────────────────────────────────
     btnAiOutline.addEventListener('click', function () {

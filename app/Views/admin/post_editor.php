@@ -119,6 +119,7 @@
         data-image-upload-url="<?= site_url('admin/posts/upload_body_image') ?>"
         data-video-upload-url="<?= site_url('admin/posts/upload_video') ?>"
         data-video-remove-url="<?= site_url('admin/posts/remove_video') ?>"
+        data-ai-analyse-url="<?= esc(config('Urls')->ai) ?>api/blog/analyse"
         data-ai-outline-url="<?= esc(config('Urls')->ai) ?>api/blog/outline"
         data-ai-models-url="<?= esc(config('Urls')->ai) ?>api/ollama/list"
         novalidate
