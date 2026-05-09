@@ -1171,6 +1171,7 @@ document.addEventListener('DOMContentLoaded', function () {
   (function () {
     const aiOutlineUrl     = form.dataset.aiOutlineUrl;
     const aiAnalyseUrl     = form.dataset.aiAnalyseUrl;
+    const aiRewriteUrl     = form.dataset.aiRewriteUrl;
     const aiModelsUrl      = form.dataset.aiModelsUrl;
     const outlineModal     = new bootstrap.Modal(document.getElementById('ai-outline-modal'));
     const outlineTopic     = document.getElementById('ai-outline-topic');
@@ -1329,6 +1330,89 @@ document.addEventListener('DOMContentLoaded', function () {
         aiError.hidden = false;
       } finally {
         btnAiAnalyse.innerHTML = originalHtml;
+        updateAiButtons();
+        btnAiOutline.disabled = false;
+      }
+    });
+
+    // ── Rewrite action ───────────────────────────────────────────────────────
+    function renderRewrite(data, originalTitle) {
+      const titleChanged = data.title && data.title !== originalTitle;
+      let html = '';
+
+      if (titleChanged) {
+        html += '<div class="mb-3">'
+             +    '<div class="small text-secondary fw-semibold mb-1">Suggested title</div>'
+             +    '<div class="small border rounded px-2 py-1 font-monospace">' + data.title.replace(/</g, '&lt;') + '</div>'
+             +  '</div>';
+      }
+
+      html += '<div class="mb-3">'
+           +    '<div class="small text-secondary fw-semibold mb-1">Rewritten content</div>'
+           +    '<pre id="ai-rewrite-content" class="small border rounded p-2 mb-0" style="white-space: pre-wrap; word-break: break-word; max-height: 20rem; overflow-y: auto;">'
+           +    data.content.replace(/</g, '&lt;')
+           +    '</pre>'
+           +  '</div>'
+           +  '<button type="button" class="btn btn-sm btn-primary" id="btn-ai-apply-rewrite">'
+           +    'Apply rewrite'
+           +  '</button>';
+
+      return html;
+    }
+
+    btnAiRewrite.addEventListener('click', async function () {
+      const headers = authHeaders();
+      if (!headers['user-uuid'] || !headers['apikey']) {
+        aiError.textContent = 'Authentication cookies are missing. Please log in again.';
+        aiError.hidden = false;
+        return;
+      }
+
+      const originalTitle = titleInput.value.trim();
+      const originalHtml  = btnAiRewrite.innerHTML;
+      btnAiAnalyse.disabled = true;
+      btnAiRewrite.disabled = true;
+      btnAiRewrite.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+      btnAiOutline.disabled = true;
+      resetAiPane();
+
+      try {
+        const res = await fetch(aiRewriteUrl, {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+          body: JSON.stringify({
+            title:   originalTitle,
+            content: bodyTextarea.value,
+            model:   selectedModel(),
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error('The server returned an error (' + res.status + '). Please try again.');
+        }
+
+        const data = await res.json();
+        if (!data.content) {
+          throw new Error('Unexpected response format from the AI service.');
+        }
+
+        localStorage.setItem(MODEL_PREF_KEY, selectedModel());
+        showAiResult('Rewrite', renderRewrite(data, originalTitle));
+
+        document.getElementById('btn-ai-apply-rewrite').addEventListener('click', function () {
+          if (data.title && data.title !== originalTitle) {
+            titleInput.value = data.title;
+            titleInput.dispatchEvent(new Event('input'));
+          }
+          bodyTextarea.value = data.content;
+          bodyTextarea.dispatchEvent(new Event('input'));
+          resetAiPane();
+        });
+      } catch (err) {
+        aiError.textContent = err.message || 'An unexpected error occurred.';
+        aiError.hidden = false;
+      } finally {
+        btnAiRewrite.innerHTML = originalHtml;
         updateAiButtons();
         btnAiOutline.disabled = false;
       }
