@@ -123,6 +123,7 @@
         data-ai-rewrite-url="<?= esc(config('Urls')->ai) ?>api/blog/rewrite"
         data-ai-outline-url="<?= esc(config('Urls')->ai) ?>api/blog/outline"
         data-ai-models-url="<?= esc(config('Urls')->ai) ?>api/ollama/list"
+        data-ai-tags-url="<?= esc(config('Urls')->ai) ?>api/tags/generate"
         novalidate
     >
         <?= csrf_field() ?>
@@ -599,8 +600,11 @@
 
                     <!-- Tags -->
                     <div class="card border bg-body-secondary">
-                        <div class="card-header text-secondary small text-uppercase fw-semibold">
-                            <i class="bi bi-tags me-1"></i> Tags
+                        <div class="card-header text-secondary small text-uppercase fw-semibold d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-tags me-1"></i> Tags</span>
+                            <button type="button" id="btn-ai-tags" class="btn btn-sm btn-outline-secondary border-0 py-0 px-1 lh-1" title="Generate tags with AI">
+                                <i class="bi bi-stars"></i>
+                            </button>
                         </div>
                             <div class="card-body">
                                 <?php
@@ -768,6 +772,31 @@
     <div class="d-flex">
         <div class="toast-body">
             <i class="bi bi-exclamation-triangle-fill me-1"></i> You have unsaved changes.
+        </div>
+    </div>
+</div>
+<!-- AI Tags modal -->
+<div class="modal fade" id="ai-tags-modal" tabindex="-1" aria-labelledby="ai-tags-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ai-tags-modal-label"><i class="bi bi-stars me-2"></i>AI Tag Suggestions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ai-tags-loading" class="text-center py-3">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Generating tags…
+                </div>
+                <div id="ai-tags-result" hidden>
+                    <p class="small text-secondary mb-3">Select the tags you want to add:</p>
+                    <div id="ai-tags-checkboxes" class="d-flex flex-wrap gap-2"></div>
+                </div>
+                <div id="ai-tags-error" class="alert alert-danger small mb-0" role="alert" hidden></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btn-ai-tags-apply" disabled>Add Selected Tags</button>
+            </div>
         </div>
     </div>
 </div>

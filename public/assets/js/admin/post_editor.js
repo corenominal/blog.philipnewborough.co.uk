@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnAiAnalyse  = document.getElementById('btn-ai-analyse');
   const btnAiRewrite  = document.getElementById('btn-ai-rewrite');
   const btnAiOutline  = document.getElementById('btn-ai-outline');
+  const btnAiTags     = document.getElementById('btn-ai-tags');
 
   const btnGenerateSlug = document.getElementById('btn-generate-slug');
   const btnCopySlug     = document.getElementById('btn-copy-slug');
@@ -457,6 +458,122 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initial render (do not mark dirty)
     renderTags(false);
+
+    // ── AI tag suggestions ───────────────────────────────────────────────────
+    if (btnAiTags) {
+      const aiTagsUrl      = form.dataset.aiTagsUrl;
+      const aiTagsModal    = new bootstrap.Modal(document.getElementById('ai-tags-modal'));
+      const aiTagsLoading  = document.getElementById('ai-tags-loading');
+      const aiTagsResult   = document.getElementById('ai-tags-result');
+      const aiTagsBoxes    = document.getElementById('ai-tags-checkboxes');
+      const aiTagsError    = document.getElementById('ai-tags-error');
+      const btnAiTagsApply = document.getElementById('btn-ai-tags-apply');
+
+      function getAiCookie(name) {
+        const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+        return match ? decodeURIComponent(match[1]) : null;
+      }
+
+      btnAiTags.addEventListener('click', async function () {
+        aiTagsLoading.hidden = false;
+        aiTagsResult.hidden = true;
+        aiTagsError.hidden = true;
+        aiTagsBoxes.innerHTML = '';
+        btnAiTagsApply.disabled = true;
+
+        aiTagsModal.show();
+
+        const text = (bodyTextarea ? bodyTextarea.value.trim() : '') || (titleInput ? titleInput.value.trim() : '');
+        if (!text) {
+          aiTagsLoading.hidden = true;
+          aiTagsError.textContent = 'Please add some post content before generating tags.';
+          aiTagsError.hidden = false;
+          return;
+        }
+
+        const aiModelSelect = document.getElementById('ai-model-select');
+        const model = aiModelSelect ? aiModelSelect.value : '';
+
+        try {
+          const res = await fetch(aiTagsUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'user-uuid': getAiCookie('user_uuid'),
+              'apikey':    getAiCookie('apikey'),
+            },
+            body: JSON.stringify({ text: text, model: model }),
+          });
+
+          if (!res.ok) {
+            throw new Error('The server returned an error (' + res.status + '). Please try again.');
+          }
+
+          const data = await res.json();
+          if (!data.tags || !Array.isArray(data.tags)) {
+            throw new Error('Unexpected response format from the AI service.');
+          }
+
+          aiTagsLoading.hidden = true;
+
+          if (!data.tags.length) {
+            aiTagsError.textContent = 'No tag suggestions were returned.';
+            aiTagsError.hidden = false;
+            return;
+          }
+
+          function updateApplyBtn() {
+            const anyChecked = Array.from(
+              aiTagsBoxes.querySelectorAll('input[type="checkbox"]:not(:disabled)')
+            ).some(function (c) { return c.checked; });
+            btnAiTagsApply.disabled = !anyChecked;
+          }
+
+          data.tags.forEach(function (tag, i) {
+            const alreadyAdded = tagsArray.indexOf(tag) !== -1;
+            const id = 'ai-tag-cb-' + i;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'form-check';
+
+            const cb = document.createElement('input');
+            cb.className = 'form-check-input';
+            cb.type = 'checkbox';
+            cb.id = id;
+            cb.value = tag;
+            if (alreadyAdded) {
+              cb.disabled = true;
+            } else {
+              cb.checked = true;
+              cb.addEventListener('change', updateApplyBtn);
+            }
+
+            const lbl = document.createElement('label');
+            lbl.className = 'form-check-label' + (alreadyAdded ? ' text-secondary text-decoration-line-through' : '');
+            lbl.htmlFor = id;
+            lbl.textContent = tag;
+
+            wrapper.appendChild(cb);
+            wrapper.appendChild(lbl);
+            aiTagsBoxes.appendChild(wrapper);
+          });
+
+          updateApplyBtn();
+          aiTagsResult.hidden = false;
+        } catch (err) {
+          aiTagsLoading.hidden = true;
+          aiTagsError.textContent = err.message || 'An unexpected error occurred.';
+          aiTagsError.hidden = false;
+        }
+      });
+
+      btnAiTagsApply.addEventListener('click', function () {
+        aiTagsBoxes.querySelectorAll('input[type="checkbox"]:not(:disabled):checked').forEach(function (cb) {
+          addTag(cb.value);
+        });
+        aiTagsModal.hide();
+      });
+    }
   }
   if (pubAtInput) {
     pubAtInput.addEventListener('change', function () {
