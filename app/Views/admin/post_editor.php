@@ -126,6 +126,7 @@
         data-ai-tags-url="<?= esc(config('Urls')->ai) ?>api/tags/generate"
         data-ai-excerpt-url="<?= esc(config('Urls')->ai) ?>api/blog/excerpt"
         data-ai-creative-url="<?= esc(config('Urls')->ai) ?>api/blog/creative"
+        data-ai-alttext-url="<?= esc(config('Urls')->ai) ?>api/images/alttext"
         novalidate
     >
         <?= csrf_field() ?>

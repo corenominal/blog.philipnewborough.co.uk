@@ -797,6 +797,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ── Image upload tab ──────────────────────────────────────────────────────
   (function () {
     const imageUploadUrl   = form ? form.dataset.imageUploadUrl : null;
+    const aiAlttextUrl     = form ? form.dataset.aiAlttextUrl : null;
     const imageDropzone    = document.getElementById('image-upload-dropzone');
     const imageFileInput   = document.getElementById('field-image-file');
     const imageGallery     = document.getElementById('image-gallery');
@@ -840,35 +841,92 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    function fetchAltText(file, url, altInput, mdInput, altSpinner) {
+      if (!aiAlttextUrl) {
+        if (altSpinner) altSpinner.hidden = true;
+        return;
+      }
+      function getCookie(name) {
+        const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+        return match ? decodeURIComponent(match[1]) : null;
+      }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const base64 = e.target.result.split(',')[1];
+        fetch(aiAlttextUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'user-uuid':    getCookie('user_uuid'),
+            'apikey':       getCookie('apikey'),
+          },
+          body: JSON.stringify({ image: base64, model: 'gemma4:e4b' }),
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (altSpinner) altSpinner.hidden = true;
+            if (data && data.alt_text) {
+              altInput.value = data.alt_text;
+              mdInput.value = '![' + data.alt_text + '](' + url + ')';
+            }
+          })
+          .catch(function () {
+            if (altSpinner) altSpinner.hidden = true;
+          });
+      };
+      reader.onerror = function () {
+        if (altSpinner) altSpinner.hidden = true;
+      };
+      reader.readAsDataURL(file);
+    }
+
     function prependImageCard(url, filename) {
-      const mdValue  = '![Alt text](' + url + ')';
+      const altDefault = 'Alt text';
+      const mdValue    = '![' + altDefault + '](' + url + ')';
+      const safeFile   = escHtml(filename);
+      const cssFile    = CSS.escape(filename);
 
       const card = document.createElement('div');
       card.className = 'card border';
       card.innerHTML = '<div class="card-body d-flex gap-3 align-items-start">' +
-        '<img src="' + escHtml(url) + '" alt="' + escHtml(filename) + '" ' +
+        '<img src="' + escHtml(url) + '" alt="' + safeFile + '" ' +
           'class="rounded border flex-shrink-0" style="width:120px;height:auto;object-fit:cover;">' +
         '<div class="flex-grow-1 min-w-0">' +
           '<label class="form-label small text-secondary mb-1">URL</label>' +
           '<div class="input-group input-group-sm mb-2">' +
-            '<input type="text" class="form-control font-monospace" id="img-url-' + escHtml(filename) + '" value="' + escHtml(url) + '" readonly>' +
+            '<input type="text" class="form-control font-monospace" id="img-url-' + safeFile + '" value="' + escHtml(url) + '" readonly>' +
             '<button class="btn btn-outline-secondary" type="button" title="Copy URL"><i class="bi bi-clipboard"></i></button>' +
+          '</div>' +
+          '<label class="form-label small text-secondary mb-1 d-flex align-items-center gap-1">Alt text' +
+            '<span class="spinner-border spinner-border-sm text-secondary" id="img-alt-spinner-' + safeFile + '" role="status" aria-label="Generating alt text"></span>' +
+          '</label>' +
+          '<div class="mb-2">' +
+            '<input type="text" class="form-control form-control-sm" id="img-alt-' + safeFile + '" value="' + escHtml(altDefault) + '" placeholder="Alt text">' +
           '</div>' +
           '<label class="form-label small text-secondary mb-1">Markdown</label>' +
           '<div class="input-group input-group-sm">' +
-            '<input type="text" class="form-control font-monospace" id="img-md-' + escHtml(filename) + '" value="' + escHtml(mdValue) + '" readonly>' +
+            '<input type="text" class="form-control font-monospace" id="img-md-' + safeFile + '" value="' + escHtml(mdValue) + '" readonly>' +
             '<button class="btn btn-outline-secondary" type="button" title="Copy Markdown"><i class="bi bi-clipboard"></i></button>' +
           '</div>' +
         '</div>' +
         '</div>';
 
-      const urlInput = card.querySelector('#img-url-' + CSS.escape(filename));
-      const mdInput  = card.querySelector('#img-md-' + CSS.escape(filename));
-      const btns     = card.querySelectorAll('.btn-outline-secondary');
+      const urlInput   = card.querySelector('#img-url-' + cssFile);
+      const altInput   = card.querySelector('#img-alt-' + cssFile);
+      const mdInput    = card.querySelector('#img-md-' + cssFile);
+      const altSpinner = card.querySelector('#img-alt-spinner-' + cssFile);
+      const btns       = card.querySelectorAll('.btn-outline-secondary');
       if (urlInput && btns[0]) makeCopyButton(urlInput, btns[0]);
       if (mdInput  && btns[1]) makeCopyButton(mdInput,  btns[1]);
 
+      if (altInput && mdInput) {
+        altInput.addEventListener('input', function () {
+          mdInput.value = '![' + altInput.value + '](' + url + ')';
+        });
+      }
+
       imageGallery.insertBefore(card, imageGallery.firstChild);
+      return { altInput: altInput, mdInput: mdInput, altSpinner: altSpinner };
     }
 
     function appendCsrfToFormData(fd) {
@@ -902,7 +960,10 @@ document.addEventListener('DOMContentLoaded', function () {
             showImageError((data && data.error) || 'Upload failed.');
             return;
           }
-          prependImageCard(data.url, data.filename);
+          const refs = prependImageCard(data.url, data.filename);
+          if (refs && refs.altInput && refs.mdInput && refs.altSpinner) {
+            fetchAltText(file, data.url, refs.altInput, refs.mdInput, refs.altSpinner);
+          }
         })
         .catch(function () {
           if (imageProgress) imageProgress.hidden = true;
