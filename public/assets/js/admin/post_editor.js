@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnAiAnalyse  = document.getElementById('btn-ai-analyse');
   const btnAiRewrite  = document.getElementById('btn-ai-rewrite');
   const btnAiOutline  = document.getElementById('btn-ai-outline');
+  const btnAiCreative = document.getElementById('btn-ai-creative');
   const btnAiTags     = document.getElementById('btn-ai-tags');
   const btnAiExcerpt  = document.getElementById('btn-ai-excerpt');
 
@@ -139,8 +140,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateAiButtons() {
     const empty = bodyTextarea.value.trim() === '';
-    if (btnAiAnalyse) btnAiAnalyse.disabled = empty;
-    if (btnAiRewrite) btnAiRewrite.disabled = empty;
+    if (btnAiAnalyse)  btnAiAnalyse.disabled  = empty;
+    if (btnAiRewrite)  btnAiRewrite.disabled  = empty;
+    if (btnAiCreative) btnAiCreative.disabled = empty;
   }
 
   bodyTextarea.addEventListener('input', function () {
@@ -1693,6 +1695,129 @@ document.addEventListener('DOMContentLoaded', function () {
         outlineSpinner.hidden = true;
       }
     });
+
+    // ── Creative Rewrite action ──────────────────────────────────────────────
+    const aiCreativeUrl = form.dataset.aiCreativeUrl;
+
+    function renderCreativeRewrite(data) {
+      const preStyle = 'white-space: pre-wrap; word-break: break-word; max-height: 20rem; overflow-y: auto;';
+      let html = '';
+
+      if (data.title) {
+        html += '<div class="mb-3">'
+             +    '<div class="small text-secondary fw-semibold mb-1">Suggested title</div>'
+             +    '<div class="small border rounded px-2 py-1 font-monospace">' + data.title.replace(/</g, '&lt;') + '</div>'
+             +  '</div>';
+      }
+
+      html += '<ul class="nav nav-tabs mb-2" id="creative-tabs">'
+           +    '<li class="nav-item"><button class="nav-link py-1 small active" type="button" data-bs-toggle="tab" data-bs-target="#creative-pane-raw">Markdown</button></li>'
+           +    '<li class="nav-item"><button class="nav-link py-1 small" type="button" id="creative-tab-preview" data-bs-toggle="tab" data-bs-target="#creative-pane-preview">Preview</button></li>'
+           +  '</ul>'
+           +  '<div class="tab-content mb-3">'
+           +    '<div class="tab-pane show active" id="creative-pane-raw">'
+           +      '<pre class="small border rounded p-2 mb-0" style="' + preStyle + '">' + data.content.replace(/</g, '&lt;') + '</pre>'
+           +    '</div>'
+           +    '<div class="tab-pane" id="creative-pane-preview">'
+           +      '<div class="border rounded p-3" style="max-height:20rem;overflow-y:auto">'
+           +        '<div class="post__body e-content" id="creative-preview-body">'
+           +          '<p class="text-secondary small mb-0">Loading preview…</p>'
+           +        '</div>'
+           +      '</div>'
+           +    '</div>'
+           +  '</div>'
+           +  '<button type="button" class="btn btn-sm btn-primary" id="btn-ai-apply-creative">Use this rewrite</button>';
+
+      return html;
+    }
+
+    if (btnAiCreative) {
+      btnAiCreative.addEventListener('click', async function () {
+        const headers = authHeaders();
+        if (!headers['user-uuid'] || !headers['apikey']) {
+          aiError.textContent = 'Authentication cookies are missing. Please log in again.';
+          aiError.hidden = false;
+          return;
+        }
+
+        const originalTitle   = titleInput.value.trim();
+        const originalContent = bodyTextarea.value;
+        const originalHtml    = btnAiCreative.innerHTML;
+        btnAiAnalyse.disabled  = true;
+        btnAiRewrite.disabled  = true;
+        btnAiOutline.disabled  = true;
+        btnAiCreative.disabled = true;
+        btnAiCreative.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        resetAiPane();
+
+        try {
+          const res = await fetch(aiCreativeUrl, {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+            body: JSON.stringify({
+              title:   originalTitle,
+              content: originalContent,
+              model:   selectedModel(),
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error('The server returned an error (' + res.status + '). Please try again.');
+          }
+
+          const data = await res.json();
+          if (!data.content) {
+            throw new Error('Unexpected response format from the AI service.');
+          }
+
+          localStorage.setItem(MODEL_PREF_KEY, selectedModel());
+          showAiResult('Creative Rewrite', renderCreativeRewrite(data));
+
+          const applyBtn = document.getElementById('btn-ai-apply-creative');
+          if (applyBtn) {
+            applyBtn.addEventListener('click', function () {
+              if (data.title) {
+                titleInput.value = data.title;
+                titleInput.dispatchEvent(new Event('input'));
+              }
+              bodyTextarea.value = data.content;
+              bodyTextarea.dispatchEvent(new Event('input'));
+              resetAiPane();
+            });
+          }
+
+          const creativePreviewTab = document.getElementById('creative-tab-preview');
+          if (creativePreviewTab) {
+            let previewFetched = false;
+            creativePreviewTab.addEventListener('shown.bs.tab', function () {
+              if (previewFetched) return;
+              previewFetched = true;
+              const previewBody = document.getElementById('creative-preview-body');
+              fetch(previewUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ markdown: data.content }),
+              })
+                .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
+                .then(function (d) {
+                  previewBody.innerHTML = d.body_html || '';
+                  previewBody.querySelectorAll('table').forEach(function (t) { t.classList.add('table', 'table-bordered'); });
+                })
+                .catch(function () {
+                  previewBody.innerHTML = '<p class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Preview unavailable.</p>';
+                });
+            });
+          }
+        } catch (err) {
+          aiError.textContent = err.message || 'An unexpected error occurred.';
+          aiError.hidden = false;
+        } finally {
+          btnAiCreative.innerHTML = originalHtml;
+          updateAiButtons();
+          btnAiOutline.disabled = false;
+        }
+      });
+    }
 
     btnAiClear.addEventListener('click', resetAiPane);
 

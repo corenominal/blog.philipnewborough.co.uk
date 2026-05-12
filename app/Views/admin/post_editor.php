@@ -125,6 +125,7 @@
         data-ai-models-url="<?= esc(config('Urls')->ai) ?>api/ollama/list"
         data-ai-tags-url="<?= esc(config('Urls')->ai) ?>api/tags/generate"
         data-ai-excerpt-url="<?= esc(config('Urls')->ai) ?>api/blog/excerpt"
+        data-ai-creative-url="<?= esc(config('Urls')->ai) ?>api/blog/creative"
         novalidate
     >
         <?= csrf_field() ?>
@@ -447,6 +448,7 @@
                                         <button type="button" class="btn btn-outline-secondary" id="btn-ai-analyse">Analyse</button>
                                         <button type="button" class="btn btn-outline-secondary" id="btn-ai-rewrite">Rewrite</button>
                                         <button type="button" class="btn btn-outline-secondary" id="btn-ai-outline">Outline</button>
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-ai-creative">Creative Rewrite</button>
                                     </div>
                                     <div id="ai-model-wrap" style="min-width: 10rem;">
                                         <select class="form-select form-select-sm" id="ai-model-select" aria-label="AI model" disabled>
@@ -460,7 +462,9 @@
                                     <dt class="mb-1">Rewrite</dt>
                                     <dd class="mb-3">Rewrites a blog post to fix typos, spelling mistakes, grammar errors, and punctuation issues, and to improve sentence flow and readability. The author's original style, voice, and tone are preserved throughout. No new information is added and the structure is kept intact.</dd>
                                     <dt class="mb-1">Outline</dt>
-                                    <dd class="mb-0">Generates a suggested structure for a blog post based on a given topic or working title. Returns a hierarchy of H2 sections with optional H3 subheadings, suitable for use as a writing plan before drafting begins.</dd>
+                                    <dd class="mb-3">Generates a suggested structure for a blog post based on a given topic or working title. Returns a hierarchy of H2 sections with optional H3 subheadings, suitable for use as a writing plan before drafting begins.</dd>
+                                    <dt class="mb-1">Creative Rewrite</dt>
+                                    <dd class="mb-0">Rewrites a blog post with a more creative, engaging style — refreshing the title and content while preserving the core ideas. Returns a full alternative version you can apply directly or cherry-pick from.</dd>
                                 </dl>
                                 <div id="ai-result" hidden>
                                     <div class="d-flex justify-content-between align-items-center mb-3">
