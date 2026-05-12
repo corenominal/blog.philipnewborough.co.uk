@@ -69,6 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') closeModal();
     });
 
+    // Bootstrap table classes for post body tables
+    document.querySelectorAll('.post__body table').forEach((table) => {
+        table.classList.add('table', 'table-bordered');
+    });
+
     // Copy button for code blocks
     document.querySelectorAll('.post__body pre > code').forEach((codeEl) => {
         const pre = codeEl.parentElement;
