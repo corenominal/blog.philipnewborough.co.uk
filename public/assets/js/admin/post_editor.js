@@ -1694,6 +1694,16 @@ document.addEventListener('DOMContentLoaded', function () {
     loadModels();
   }());
 
+  // ── Keyboard shortcut: Ctrl/Cmd+S to save ────────────────────────────────
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's' && !e.altKey && !e.shiftKey) {
+      e.preventDefault();
+      if (!isSaving) {
+        form.requestSubmit();
+      }
+    }
+  });
+
   // ── Init ─────────────────────────────────────────────────────────────────
   updateCharCount();
   updateAiButtons();
