@@ -345,6 +345,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Body HTML (server-rendered)
     // DOMPurify is not available in this project; the preview is admin-only trusted content
     previewBody.innerHTML = bodyHtml;
+    previewBody.querySelectorAll('table').forEach(function (t) { t.classList.add('table', 'table-bordered'); });
 
     // Video
     const videoFilenameInput = document.getElementById('field-video-filename');
@@ -1608,7 +1609,10 @@ document.addEventListener('DOMContentLoaded', function () {
               body: JSON.stringify({ markdown: data.content }),
             })
               .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
-              .then(function (d) { previewBody.innerHTML = d.body_html || ''; })
+              .then(function (d) {
+                previewBody.innerHTML = d.body_html || '';
+                previewBody.querySelectorAll('table').forEach(function (t) { t.classList.add('table', 'table-bordered'); });
+              })
               .catch(function () {
                 previewBody.innerHTML = '<p class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Preview unavailable.</p>';
               });
