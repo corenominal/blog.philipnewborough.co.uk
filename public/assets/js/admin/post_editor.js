@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnAiRewrite  = document.getElementById('btn-ai-rewrite');
   const btnAiOutline  = document.getElementById('btn-ai-outline');
   const btnAiTags     = document.getElementById('btn-ai-tags');
+  const btnAiExcerpt  = document.getElementById('btn-ai-excerpt');
 
   const btnGenerateSlug = document.getElementById('btn-generate-slug');
   const btnCopySlug     = document.getElementById('btn-copy-slug');
@@ -1696,6 +1697,112 @@ document.addEventListener('DOMContentLoaded', function () {
     btnAiClear.addEventListener('click', resetAiPane);
 
     loadModels();
+  }());
+
+  // ── AI Excerpt ───────────────────────────────────────────────────────────
+  (function () {
+    if (!btnAiExcerpt) return;
+
+    const aiExcerptUrl   = form.dataset.aiExcerptUrl;
+    const excerptModalEl = document.getElementById('ai-excerpt-modal');
+    const excerptModal   = new bootstrap.Modal(excerptModalEl);
+    const excerptLoading = document.getElementById('ai-excerpt-loading');
+    const excerptResult  = document.getElementById('ai-excerpt-result');
+    const excerptText    = document.getElementById('ai-excerpt-text');
+    const excerptError   = document.getElementById('ai-excerpt-error');
+    const btnRetry       = document.getElementById('btn-ai-excerpt-retry');
+    const retrySpinner   = document.getElementById('ai-excerpt-retry-spinner');
+    const btnUse         = document.getElementById('btn-ai-excerpt-use');
+
+    function getCookie(name) {
+      const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function getSelectedLength() {
+      const checked = document.querySelector('input[name="ai-excerpt-length"]:checked');
+      return checked ? checked.value : 'medium';
+    }
+
+    function getModel() {
+      const sel = document.getElementById('ai-model-select');
+      return (sel && sel.value) ? sel.value : 'gemma4:e4b';
+    }
+
+    async function fetchExcerpt(isRetry) {
+      if (isRetry) {
+        retrySpinner.hidden = false;
+        btnRetry.disabled   = true;
+        btnUse.disabled     = true;
+      } else {
+        excerptLoading.hidden = false;
+        excerptResult.hidden  = true;
+        excerptError.hidden   = true;
+        btnRetry.hidden       = true;
+        btnUse.hidden         = true;
+      }
+
+      try {
+        const res = await fetch(aiExcerptUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'user-uuid': getCookie('user_uuid'),
+            'apikey':    getCookie('apikey'),
+          },
+          body: JSON.stringify({
+            title:   titleInput ? titleInput.value.trim() : '',
+            content: bodyTextarea ? bodyTextarea.value.trim() : '',
+            length:  getSelectedLength(),
+            model:   getModel(),
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error('The server returned an error (' + res.status + '). Please try again.');
+        }
+
+        const data = await res.json();
+        if (!data.excerpt) {
+          throw new Error('Unexpected response from the AI service.');
+        }
+
+        excerptText.textContent   = data.excerpt;
+        excerptLoading.hidden     = true;
+        excerptResult.hidden      = false;
+        excerptError.hidden       = true;
+        btnRetry.hidden           = false;
+        btnUse.hidden             = false;
+      } catch (err) {
+        excerptLoading.hidden = true;
+        excerptResult.hidden  = true;
+        excerptError.textContent = err.message || 'An unexpected error occurred.';
+        excerptError.hidden   = false;
+        btnRetry.hidden       = false;
+        btnUse.hidden         = true;
+      } finally {
+        if (isRetry) {
+          retrySpinner.hidden = true;
+          btnRetry.disabled   = false;
+          btnUse.disabled     = false;
+        }
+      }
+    }
+
+    btnAiExcerpt.addEventListener('click', function () {
+      excerptModal.show();
+      fetchExcerpt(false);
+    });
+
+    btnRetry.addEventListener('click', function () {
+      fetchExcerpt(true);
+    });
+
+    btnUse.addEventListener('click', function () {
+      excerptTextarea.value = excerptText.textContent;
+      excerptTextarea.dispatchEvent(new Event('input'));
+      excerptModal.hide();
+    });
   }());
 
   // ── Keyboard shortcut: Ctrl/Cmd+S to save ────────────────────────────────

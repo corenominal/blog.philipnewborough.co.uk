@@ -124,6 +124,7 @@
         data-ai-outline-url="<?= esc(config('Urls')->ai) ?>api/blog/outline"
         data-ai-models-url="<?= esc(config('Urls')->ai) ?>api/ollama/list"
         data-ai-tags-url="<?= esc(config('Urls')->ai) ?>api/tags/generate"
+        data-ai-excerpt-url="<?= esc(config('Urls')->ai) ?>api/blog/excerpt"
         novalidate
     >
         <?= csrf_field() ?>
@@ -505,9 +506,23 @@
                 </div><!-- /.post-editor__body-wrapper -->
 
                 <!-- Excerpt -->
-                <div>
-                    <div class="d-flex align-items-center justify-content-between mb-1">
+                <div class="card border bg-body-secondary">
+                    <div class="card-header d-flex align-items-center justify-content-between">
                         <label for="field-excerpt" class="form-label text-secondary small text-uppercase fw-semibold mb-0">Excerpt</label>
+                        <button type="button" id="btn-ai-excerpt" class="btn btn-sm btn-outline-secondary border-0 py-0 px-1 lh-1" title="Generate excerpt with AI">
+                            <i class="bi bi-stars"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <textarea
+                            id="field-excerpt"
+                            name="excerpt"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Short summary shown in post listings and social shares…"
+                        ><?= esc($val('excerpt')) ?></textarea>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end">
                         <small
                             id="excerpt-char-count"
                             class="text-secondary"
@@ -521,13 +536,6 @@
                             data-bs-content="<ul class='mb-0 ps-3 small'><li><span class='text-success fw-semibold'>Optimal (110–135):</span> Safe zone, unlikely to be truncated on mobile or desktop.</li><li class='mt-1'><span class='text-warning fw-semibold'>Acceptable (40–109 or 136–160):</span> Works, but may be cut short on some platforms.</li><li class='mt-1'><span class='text-danger fw-semibold'>Too short (&lt;40):</span> Preview looks empty and less professional.</li><li class='mt-1'><span class='text-danger fw-semibold'>Too long (&gt;160):</span> Almost certainly replaced with an ellipsis (&hellip;).</li></ul>"
                         >0 chars <i class="bi bi-info-circle"></i></small>
                     </div>
-                    <textarea
-                        id="field-excerpt"
-                        name="excerpt"
-                        class="form-control"
-                        rows="3"
-                        placeholder="Short summary shown in post listings and social shares…"
-                    ><?= esc($val('excerpt')) ?></textarea>
                 </div>
 
             </div><!-- /.col main -->
@@ -825,6 +833,46 @@
                     <span id="ai-outline-spinner" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" hidden></span>
                     Generate
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Excerpt modal -->
+<div class="modal fade" id="ai-excerpt-modal" tabindex="-1" aria-labelledby="ai-excerpt-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ai-excerpt-modal-label"><i class="bi bi-stars me-2"></i>AI Excerpt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ai-excerpt-loading" class="text-center py-3">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Generating excerpt…
+                </div>
+                <div id="ai-excerpt-result" hidden>
+                    <p id="ai-excerpt-text" class="border rounded p-3 bg-body-tertiary small mb-3"></p>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-secondary">Length:</span>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Excerpt length">
+                            <input type="radio" class="btn-check" name="ai-excerpt-length" id="ai-excerpt-length-short" value="short" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="ai-excerpt-length-short">Short</label>
+                            <input type="radio" class="btn-check" name="ai-excerpt-length" id="ai-excerpt-length-medium" value="medium" autocomplete="off" checked>
+                            <label class="btn btn-outline-secondary" for="ai-excerpt-length-medium">Medium</label>
+                            <input type="radio" class="btn-check" name="ai-excerpt-length" id="ai-excerpt-length-long" value="long" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="ai-excerpt-length-long">Long</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="ai-excerpt-error" class="alert alert-danger small mb-0" role="alert" hidden></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-ai-excerpt-retry" hidden>
+                    <span id="ai-excerpt-retry-spinner" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" hidden></span>
+                    Try again
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-ai-excerpt-use" hidden>Use this excerpt</button>
             </div>
         </div>
     </div>
